@@ -1,205 +1,199 @@
 import requests
 import datetime as dt
-from .helpers import datetime_to_timestamp, seconds_to_timeframe, validate_timeframe, preprocess_timeframe, resample_data, timeframe_to_secs
+from .helpers import datetime_to_timestamp, seconds_to_timeframe, validate_timeframe, preprocess_timeframe, resample_data, timeframe_to_secs, minutes_of_new_data
 import pandas as pd
+import os
+import math
+import json 
+from binance.client import Client
+from binance import ThreadedWebsocketManager
 
 class Provider:
-    def __init__(self, base_asset, quote_asset, timeframe):
-        self.base_asset = base_asset
-        self.quote_asset = quote_asset
-        
+    def __init__(self, api_key, secret_api_key):
+        self.api_key = api_key
+        self.secret_api_key = secret_api_key
+
+class Binance(Provider):
+    def __init__(self, api_key, secret_api_key):
+        super().__init__(api_key, secret_api_key)
+        self.client = Client(api_key=api_key, api_secret=secret_api_key)
+        self.twm = ThreadedWebsocketManager(api_key=api_key, api_secret=secret_api_key)
+        self.twm.start()
+
+    def validate_asset_config(self, base_asset, quote_asset, timeframe):
+        self.fetch_valid_symbol(base_asset, quote_asset)
+
         self.timeframe = timeframe
         validate_timeframe(timeframe)
         self.timeframe_seconds = timeframe_to_secs(timeframe)
-
-class Poloniex(Provider):
-    def __init__(self, base_asset, quote_asset, timeframe):
-        super().__init__(base_asset, quote_asset, timeframe)
-        self.symbol = self.fetch_valid_symbol()
         
-    def fetch_valid_symbol(self, show_all = False):
-        """Get valid pair symbol for Poloniex Exchange
-
-        Parameters
-        ----------
-        show : bool, optional
-            Pretty print data, by default False
-
-        Returns
-        -------
-        list
-            A list of trading pairs
-        """    
-
-        url = "https://poloniex.com/public?command=returnTicker"
-        response = requests.get(url)
-        data = response.json()
-        tickers = [i for i in data]
-        if show_all:
-            print("Available Pairs:")
-            print(tickers)
-
-        test_symbol = self.base_asset + '_' + self.quote_asset
-        for ticker in tickers:
-            if ticker == test_symbol:
-                return ticker
-        
-        raise ValueError('No valid symbols exist for the pair ({}/{})'.format(self.base_asset, self.quote_asset))
-        
-
-    def fetch_historical_klines(self, start, end = None):
-        """Fetch historical data for a coin pair from Poloniex
-
-        Parameters
-        ----------
-        base_asset : str
-            Target asset to trade
-        quote_asset : str
-            Quote asset to trade with
-        timeframe : str
-            Candle timeframe
-        start : datetime
-            Date for beginning of data
-        end : datetime
-            Date for end of data
-
-        Returns
-        -------
-        pandas.DataFrame
-            A pandas dataframe of historical data
-        """    
-
-        # Preprocess timeframe
-        _, timeframe_seconds = preprocess_timeframe(self.timeframe, valid_timeframes=['5-min', '15-min', '30-min', '2-hour', '4-hour', '24-hour'])
-
-        # Handling of dates
-        start = dt.datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
-        
-        if end is not None and type(end) is str:
-            end = dt.datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
-        else:
-            end = dt.datetime.now()
-
-        if start >= end:
-            raise ValueError("Start date must be earlier than end date")
-
-        start = datetime_to_timestamp(start)
-        end = datetime_to_timestamp(end)
-
-        # Get data
-        url = "https://poloniex.com/public?command=returnChartData&currencyPair={0}&start={1}&end={2}&resolution=auto&period={3}"
-        url = url.format(self.symbol, start, end, timeframe_seconds)
-        response = requests.get(url)
-        df = pd.DataFrame(response.json())
-
-        # Format dataframe
-        df['date'] = pd.to_datetime(df.date, unit='s')
-        df = df.set_index(df.date, drop=True)
-        df = df[['low', 'high', 'open', 'close', 'volume']]
-
-        # Resample to higher time frame if necessary
-        df = resample_data(df, self.timeframe)
-
-        self.timeframe_seconds = (df.index[1] - df.index[0]).total_seconds()
-        self.timeframe = seconds_to_timeframe(self.timeframe_seconds)
-
-        return df
-
-class Binance(Provider):
-    def __init__(self, base_asset, quote_asset, timeframe):
-        super().__init__(base_asset, quote_asset, timeframe)
-        self.symbol = self.fetch_valid_symbol()
-        
-    def timeframe_to_binance_timeframe(self, timeframe):
+    def timeframe_to_provider_timeframe(self, timeframe):
         timeframe_values = timeframe.split('-')
         return timeframe_values[0] + timeframe_values[1][0]
 
-    def fetch_valid_symbol(self, show_all = False):
-        """Get valid pair symbol for Binance Exchange
-
-        Parameters
-        ----------
-        show : bool, optional
-            Pretty print data, by default False
-
-        Returns
-        -------
-        list
-            A list of trading pairs
-        """    
-
-        response = requests.get('https://api.binance.com/api/v3/exchangeInfo')
-        data = response.json()
+    def fetch_valid_symbol(self, base_asset, quote_asset):
+        data = self.client.get_exchange_info()
 
         for symbol in data['symbols']:
-            if symbol['baseAsset'] == self.base_asset and symbol['quoteAsset'] == self.quote_asset:
-                return symbol['symbol']
+            if symbol['baseAsset'] == base_asset and symbol['quoteAsset'] == quote_asset:
+                self.symbol = symbol['symbol']
+                return
 
-        raise ValueError('No valid symbols exist for the pair ({}/{})'.format(self.base_asset, self.quote_asset))
+        raise ValueError('No valid symbols exist for the pair ({}/{})'.format(base_asset, quote_asset))
         
 
-    def fetch_historical_klines(self, start, end = None):
-        """Fetch historical data for a coin pair from Binance
-
-        Parameters
-        ----------
-        base_asset : str
-            Target asset to trade
-        quote_asset : str
-            Quote asset to trade with
-        timeframe : str
-            Candle timeframe
-        start : datetime
-            Date for beginning of data
-        end : datetime
-            Date for end of data
-
-        Returns
-        -------
-        pandas.DataFrame
-            A pandas dataframe of historical data
-        """    
-
+    def fetch_historical_klines(self, save = True):
         # Preprocess timeframe
-        timeframe, _ = preprocess_timeframe(self.timeframe, valid_timeframes=['1-min', '3-min', '5-min', '15-min', '30-min', '1-hour', '2-hour', '4-hour', '6-hour', '8-hour', '12-hour', '1-day', '3-day', '1-week', '1-month'])
-        binance_timeframe = self.timeframe_to_binance_timeframe(timeframe)
+        timeframe, timeframe_seconds = preprocess_timeframe(self.timeframe, valid_timeframes=['1-min', '3-min', '5-min', '15-min', '30-min', '1-hour', '2-hour', '4-hour', '6-hour', '8-hour', '12-hour', '1-day', '3-day', '1-week', '1-month'])
+        binance_timeframe = self.timeframe_to_provider_timeframe(timeframe)
 
-        # Handling of dates
-        start = dt.datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
+        filename = '%s-%s-data.csv' % (self.symbol, binance_timeframe)
+        if os.path.isfile(filename): 
+            data_df = pd.read_csv(filename, parse_dates=['timestamp'], index_col=['timestamp'])
+        else: 
+            data_df = pd.DataFrame()
+
+        oldest_point, newest_point = minutes_of_new_data(self.symbol, binance_timeframe, data_df, source = "binance", client = self.client)
+        delta_min = (newest_point - oldest_point).total_seconds()/60
+        bin_size = timeframe_seconds / 60
+        available_data = math.ceil(delta_min / bin_size)
+
+        if oldest_point == dt.datetime.strptime('1 Jan 2017', '%d %b %Y'): 
+            print('Downloading all available %s data for %s. Be patient..!' % (binance_timeframe, self.symbol))
+
+        else: 
+            print('Downloading %d minutes of new data available for %s, i.e. %d instances of %s data.' % (delta_min, self.symbol, available_data, binance_timeframe))
+
+        klines = self.client.get_historical_klines(self.symbol, binance_timeframe, oldest_point.strftime("%d %b %Y %H:%M:%S"), newest_point.strftime("%d %b %Y %H:%M:%S"))
+        data = pd.DataFrame(klines, columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore' ])
         
-        if end is not None and type(end) is str:
-            end = dt.datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
-        else:
-            end = dt.datetime.now()
+        data['timestamp'] = pd.to_datetime(data['timestamp'], unit='ms')
+        data.set_index('timestamp', inplace=True)
+        data = data[['low', 'high', 'open', 'close', 'volume']]
 
-        if start >= end:
-            raise ValueError("Start date must be earlier than end date")
+        data["low"] = data['low'].astype('float')
+        data["high"] = data['high'].astype('float')
+        data["open"] = data['open'].astype('float')
+        data["close"] = data['close'].astype('float')
+        data["volume"] = data['volume'].astype('float')
 
-        start = int(datetime_to_timestamp(start)*1000)
-        end = int(datetime_to_timestamp(end)*1000)
+        if len(data_df) > 0:
+            temp_df = pd.DataFrame(data)
+            data_df = data_df.append(temp_df)
+        else: 
+            data_df = data
+        
+        if save: 
+            data_df.to_csv(filename)
 
-        # Grab the close tf possible given the dates
-        url = "http://www.binance.com/api/v3/klines?symbol={0}&interval={1}&limit=1000&startTime={2}&endTime={3}"
-        url = url.format(self.symbol, binance_timeframe, start, end)
-        response = requests.get(url)
-        df = pd.DataFrame(response.json())
-        df.columns = ['date', 'open', 'high', 'low', 'close', 'volume', 'date_close', 'QSA', 'num_trades', 'taker base asset vol', 'taker quote asset vol', 'ignore']
+        print('All caught up..!')
+        return data_df
 
-        # Format dataframe
-        df['date'] = pd.to_datetime(df.date, unit='ms')
-        df = df.set_index(df.date, drop=True)
-        df = df[['low', 'high', 'open', 'close', 'volume']]
-        df["low"] = df['low'].astype('float')
-        df["high"] = df['high'].astype('float')
-        df["open"] = df['open'].astype('float')
-        df["close"] = df['close'].astype('float')
-        df["volume"] = df['volume'].astype('float')
+    def stream_klines(self, asset, new_candle_callback):
 
-        # Resample to higher time frame if necessary
-        df = resample_data(df, self.timeframe)
+        def handle_socket_message(msg):
+            # If first candle or new candle received
+            cleaned_timestamp = int(str(msg['k']['T'])[:-3])
+            current_timestamp = pd.to_datetime(dt.datetime.fromtimestamp(cleaned_timestamp))
+            low = float(msg['k']['l'])
+            high = float(msg['k']['h'])
+            op = float(msg['k']['o'])
+            close = float(msg['k']['c'])
+            volume = float(msg['k']['v'])   
+            isFinished = msg['k']['x']
 
-        self.timeframe_seconds = (df.index[1] - df.index[0]).total_seconds()
-        self.timeframe = seconds_to_timeframe(self.timeframe_seconds)
+            current_candle = {
+                "timestamp": current_timestamp,
+                "low": low,
+                "high": high,
+                "open": op,
+                "close": close,
+                "volume": volume,
+                "isFinished": isFinished
+            }
 
-        return df
+            if isFinished and current_timestamp not in asset.data.index:
+                new_candle_callback(current_candle)
 
+        binance_timeframe = self.timeframe_to_provider_timeframe(self.timeframe)
+        return self.twm.start_kline_socket(callback=handle_socket_message, symbol=self.symbol, interval = binance_timeframe)
+
+
+
+# class CoinDCX(Provider):
+#     def __init__(self, api_key, secret_api_key):
+#         super().__init__(api_key, secret_api_key)
+#         self.api_key = api_key
+#         self.secret_api_key = secret_api_key
+
+#     def validate_asset_config(self, base_asset, quote_asset, timeframe):
+#         self.fetch_valid_symbol(base_asset, quote_asset)
+
+#         self.timeframe = timeframe
+#         validate_timeframe(timeframe)
+#         self.timeframe_seconds = timeframe_to_secs(timeframe)
+        
+#     def timeframe_to_provider_timeframe(self, timeframe):
+#         timeframe_values = timeframe.split('-')
+#         return timeframe_values[0] + timeframe_values[1][0]
+
+#     def fetch_valid_symbol(self, base_asset, quote_asset):
+#         response = requests.get('https://api.coindcx.com/exchange/v1/markets_details')
+#         data = response.json()
+
+#         for details in data:
+#             if details['target_currency_short_name'] == base_asset and details['base_currency_short_name'] == quote_asset:
+#                 self.symbol = details['symbol']
+#                 self.pair = details['pair']
+#                 return
+                
+#         raise ValueError('No valid symbols exist for the pair ({}/{})'.format(base_asset, quote_asset))
+        
+
+#     def fetch_historical_klines(self, save = True):
+#         # Preprocess timeframe
+#         timeframe, timeframe_seconds = preprocess_timeframe(self.timeframe, valid_timeframes=['1-min', '3-min', '5-min', '15-min', '30-min', '1-hour', '2-hour', '4-hour', '6-hour', '8-hour', '12-hour', '1-day', '3-day', '1-week', '1-month'])
+#         coindcx_timeframe = self.timeframe_to_provider_timeframe(timeframe)
+
+#         filename = '%s-%s-data.csv' % (self.symbol, coindcx_timeframe)
+#         if os.path.isfile(filename): 
+#             data_df = pd.read_csv(filename, parse_dates=['timestamp'], index_col=['timestamp'])
+#         else: 
+#             data_df = pd.DataFrame()
+
+#         oldest_point, newest_point = minutes_of_new_data(self.pair, coindcx_timeframe, data_df, source = "coindcx", client = None)
+#         delta_min = (newest_point - oldest_point).total_seconds()/60
+#         bin_size = timeframe_seconds / 60
+#         available_data = math.ceil(delta_min / bin_size)
+
+#         if oldest_point == dt.datetime.strptime('1 Jan 2017', '%d %b %Y'): 
+#             print('Downloading all available %s data for %s. Be patient..!' % (coindcx_timeframe, self.symbol))
+
+#         else: 
+#             print('Downloading %d minutes of new data available for %s, i.e. %d instances of %s data.' % (delta_min, self.symbol, available_data, coindcx_timeframe))
+
+#         # klines = self.client.get_historical_klines(self.symbol, coindcx_timeframe, oldest_point.strftime("%d %b %Y %H:%M:%S"), newest_point.strftime("%d %b %Y %H:%M:%S"))
+#         # klines =
+#         data = pd.DataFrame(klines, columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore' ])
+        
+#         data['timestamp'] = pd.to_datetime(data['timestamp'], unit='ms')
+#         data.set_index('timestamp', inplace=True)
+#         data = data[['low', 'high', 'open', 'close', 'volume']]
+
+#         data["low"] = data['low'].astype('float')
+#         data["high"] = data['high'].astype('float')
+#         data["open"] = data['open'].astype('float')
+#         data["close"] = data['close'].astype('float')
+#         data["volume"] = data['volume'].astype('float')
+
+#         if len(data_df) > 0:
+#             temp_df = pd.DataFrame(data)
+#             data_df = data_df.append(temp_df)
+#         else: 
+#             data_df = data
+        
+#         if save: 
+#             data_df.to_csv(filename)
+
+#         print('All caught up..!')
+#         return data_df
