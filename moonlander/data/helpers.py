@@ -120,14 +120,10 @@ def minutes_of_new_data(symbol, kline_size, data, source, client = None):
         start = data.index[-1]
     elif source == 'binance' or source == 'coindcx':
         start = dt.datetime.strptime('1 Jan 2017', '%d %b %Y')
-    elif source == 'bitmex':
-        start = client.Trade.Trade_getBucketed(symbol=symbol, binSize=kline_size, count=1, reverse=False).result()[0][0]['timestamp']
 
     # Get end date for date fetching
     if source == "binance": 
         end = pd.to_datetime(client.get_klines(symbol=symbol, interval=kline_size)[-1][0], unit='ms')
-    elif source == "bitmex": 
-        end = client.Trade.Trade_getBucketed(symbol=symbol, binSize=kline_size, count=1, reverse=True).result()[0][0]['timestamp']
     elif source == 'coindcx':
         response = requests.get('https://public.coindcx.com/market_data/candles?pair={}&interval={}'.format(symbol, kline_size))
         data = response.json()

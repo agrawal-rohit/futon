@@ -3,12 +3,12 @@ from bokeh.models import HoverTool, CustomJS, Range1d
 from bokeh.io import show
 from math import pi, inf
 
-def create_candle_plot(asset):
+def create_candle_plot(asset, fig_width = 1000, fig_height = 600):
     INCREASING_COLOR = '#4CAF50'
     DECREASING_COLOR = '#F44336'
 
-    p = figure(plot_width=1000, 
-            plot_height=600, 
+    p = figure(plot_width=fig_width, 
+            plot_height=fig_height, 
             x_axis_type="datetime", 
             y_axis_location="right", 
             tools="xpan,xwheel_zoom,reset,save",
@@ -103,7 +103,7 @@ def create_candle_plot(asset):
     asset.scaling_source.js_on_change('streaming', x_range_callback)
 
     # Volume bar plot
-    p2 = figure(x_axis_type="datetime",  y_axis_location="right", tools="", toolbar_location=None, plot_width=1000, plot_height=200, x_range=p.x_range)
+    p2 = figure(x_axis_type="datetime",  y_axis_location="right", tools="", toolbar_location=None, plot_width=fig_width, plot_height=200, x_range=p.x_range)
     p2.xaxis.major_label_orientation = pi/4
     
     p2.vbar(x='timestamp', width = bar_width, top='volume', color=INCREASING_COLOR, source=asset._data_source_increasing, alpha=0.5)
