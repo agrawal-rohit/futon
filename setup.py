@@ -11,6 +11,9 @@ classifiers = [
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+with open('LICENSE.md', "r", encoding="utf-8") as f:
+    license = f.read()
+
 setup(
     name="moonlander",
     version="0.0.1",
@@ -20,11 +23,11 @@ setup(
     url='',
     author='Rohit Agrawal',
     author_email="rohitagrawalofficialmail@gmail.com",
-    license="MIT",
+    license=license,
     classifiers=classifiers,
     keywords="",
-    package_dir={"": "src"},
-    packages=find_packages(where="src"),
+    test_suite="tests",
+    packages=find_packages(exclude=('tests', 'docs')),
     python_requires=">=3.6",
     install_requires=['']
 )
