@@ -80,6 +80,7 @@ class Binance(Provider):
         if len(data_df) > 0:
             temp_df = pd.DataFrame(data)
             data_df = data_df.append(temp_df)
+            data_df = data_df[~data_df.index.duplicated(keep='last')]
         else: 
             data_df = data
         
