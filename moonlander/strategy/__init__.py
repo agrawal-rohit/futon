@@ -37,16 +37,9 @@ class TradingStrategyBase:
             equity = account.total_value(today['close'])
 
             # Handle stop loss
-            for p in account.positions:
-                if p.type == "long":
-                    if p.stop_hit(today['low']):
-                        account.close_position(p, 1.0, today['low'])
-                if p.type == "short":
-                    if p.stop_hit(today['high']):
-                        account.close_position(p, 1.0, today['high'])
-            
-            # Cleanup empty positions
-            account.purge_positions()  
+            for trade in account.trades:
+                if trade.stop_hit(today['low']):
+                    account.sell(1.0, today['low'])
             
             # Update account variables
             account.date = date
@@ -60,9 +53,6 @@ class TradingStrategyBase:
             # Execute trading logic
             lookback = self.data[0:index+1]
             self.logic(account, lookback)
-
-            # Cleanup empty positions
-            account.purge_positions()  
         # ------------------------------------------------------------
 
         self.backtest_results(account)
@@ -80,23 +70,19 @@ class TradingStrategyBase:
         print("Strategy     : {0}%".format(round(pc*100, 2)))
         print("Net Profit   : {0}".format(round(profit(account.initial_capital, pc), 2)))
 
-        longs  = len([t for t in account.opened_trades if t.type == 'long'])
-        sells  = len([t for t in account.closed_trades if t.type == 'long'])
-        shorts = len([t for t in account.opened_trades if t.type == 'short'])
-        covers = len([t for t in account.closed_trades if t.type == 'short'])
+        buys  = len([t for t in account.trades if t.type == 'buy'])
+        sells  = len([t for t in account.trades if t.type == 'sell'])
 
-        print("Longs        : {0}".format(longs))
+        print("Buys        : {0}".format(buys))
         print("Sells        : {0}".format(sells))
-        print("Shorts       : {0}".format(shorts))
-        print("Covers       : {0}".format(covers))
         print("--------------------")
-        print("Total Trades : {0}".format(longs + sells + shorts + covers))
+        print("Total Trades : {0}".format(buys + sells))
         print("\n---------------------------------------")
 
         if plot_performance:
             self.chart(account, show_trades=True)
 
-    def chart(self, account, show_trades=False, title="Equity Curve"):
+    def chart(self, account, show_positions=True, show_trades=True, title="Equity Curve"):
         """Chart results.
         :param show_trades: Show trades on plot
         :type show_trades: bool
@@ -104,7 +90,7 @@ class TradingStrategyBase:
         :type title: str
         """     
 
-        candle_plot, _ = create_candle_plot(self.asset, fig_height=300)
+        candle_plot, _ = create_candle_plot(self.asset, fig_height=400, colored=False)
 
         p = bokeh.plotting.figure(x_axis_type="datetime", plot_width=1000, plot_height=300, title=title, x_range = candle_plot.x_range)
         p.grid.grid_line_alpha = 0.3
@@ -116,38 +102,37 @@ class TradingStrategyBase:
         p.line(self.data['timestamp'], account.equity, color='#49516F', legend='Strategy')
         p.legend.location = "top_left"
 
+        if show_positions:
+            for position in account.positions:
+                start = position.entry_date
+                end = position.close_date
+
+                p.add_layout(bokeh.models.BoxAnnotation(left=start, right=end, fill_alpha=0.1, fill_color='green', line_color='green', level="underlay"))
+                candle_plot.add_layout(bokeh.models.BoxAnnotation(left=start, right=end, fill_alpha=0.1, fill_color='green', line_color='green', level="underlay"))
+
+
         if show_trades:
-            for trade in account.opened_trades:
+            for trade in account.trades:
                 try:
-                    x = time.mktime(trade.date.timetuple())*1000
-                    y = account.equity[np.where(self.data['timestamp'] == trade.date.strftime("%Y-%m-%d"))[0][0]]
-                    if trade.type == 'long': 
-                        p.circle(x, y, size=6, color='green', alpha=0.5)
+                    y = account.equity[np.where(self.data['timestamp'] == trade.date)[0][0]]
+                    if trade.type == 'buy': 
+                        p.circle(trade.date, y, size=6, color='green', alpha=0.5)
 
-                        long_pos = bokeh.models.Span(location=x,
+                        candle_plot.circle(trade.date, trade.price, size=6, color='green', alpha=0.5)
+                        long_pos = bokeh.models.Span(location=trade.date,
                               dimension='height', line_color='green',
-                              line_dash='dashed', line_width=3)
+                              line_dash='dashed', line_width=2)
                         candle_plot.add_layout(long_pos)
 
-                    elif trade.type == 'short': 
-                        p.circle(x, y, size=6, color='red', alpha=0.5)
-                except:
-                    pass
+                    elif trade.type == 'sell': 
+                        p.circle(trade.date, y, size=6, color='red', alpha=0.5)
 
-            for trade in account.closed_trades:
-                try:
-                    x = time.mktime(trade.date.timetuple())*1000
-                    y = account.equity[np.where(self.data['timestamp'] == trade.date.strftime("%Y-%m-%d"))[0][0]]
-                    if trade.type == 'long': 
-                        p.circle(x, y, size=6, color='blue', alpha=0.5)
-
-                        long_pos = bokeh.models.Span(location=x,
+                        candle_plot.circle(trade.date, trade.price, size=6, color='red', alpha=0.5)
+                        long_pos = bokeh.models.Span(location=trade.date,
                               dimension='height', line_color='red',
-                              line_dash='dashed', line_width=3)
+                              line_dash='dashed', line_width=2)
                         candle_plot.add_layout(long_pos)
 
-                    elif trade.type == 'short': 
-                        p.circle(x, y, size=6, color='orange', alpha=0.5)
                 except:
                     pass
             
