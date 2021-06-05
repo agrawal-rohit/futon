@@ -13,6 +13,8 @@ from bokeh.models import HoverTool, CustomJS, Range1d
 from bokeh.events import Pan
 from bokeh.io import show, push_notebook
 
+import moonlander
+
 class Asset:
     def __init__(self, base_asset, quote_asset, provider, interval = '1-min'):
         self.base_asset = base_asset.upper()
@@ -24,9 +26,9 @@ class Asset:
 
         # Data
         self.fetch_historical_data()
-        
+
     def __repr__(self):
-        return 'Asset(base_asset={}, quote_asset={})'.format(self.currency, self.base_currency)
+        return 'Asset(base_asset={}, quote_asset={})'.format(self.base_asset, self.quote_asset)
 
     def fetch_historical_data(self):
         self.data = self.provider.fetch_historical_klines()
@@ -44,9 +46,9 @@ class Asset:
     def calculate_log_returns(self):
         self.data['log_returns'] = np.log(self.data.close / self.data.close.shift(1))
         
-    def plot_candles(self, notebook_handle = False):
+    def plot_candles(self, fig_height = 1000, notebook_handle = False):
         # Candle chart
-        candle_plot, volume_chart = create_candle_plot(self)
+        candle_plot, volume_chart = create_candle_plot(self, fig_height = fig_height)
         return show(gridplot([[candle_plot], [volume_chart]]), notebook_handle = notebook_handle)
 
     def plot_returns(self, kind="ts"):
@@ -90,45 +92,6 @@ class Asset:
         mean_return = round(self.mean_return('Y') * 100, 3)
         risk = round(self.std_return('Y') * 100, 3)
         print('Return: {}% | Risk: {}%'.format(mean_return, risk))
-
-    def start_stream(self, max_data_points = 10000):
-        new_candle_inc=dict(timestamp=[], low=[], high=[], open=[], close=[], volume=[])
-        new_candle_dec=dict(timestamp=[], low=[], high=[], open=[], close=[], volume=[])
-        new_scaling_source=dict(timestamp=[], low=[], high=[])
-        self.stream_plot = self.plot_candles(notebook_handle=True)
-
-        def on_new_candle(candle):
-            print('{} | Plotting new candle ...'.format(candle['timestamp']))
-            print(candle)
-
-            if candle['close'] > candle['open']:
-                new_candle_inc['timestamp'].append(candle['timestamp']) 
-                new_candle_inc['low'].append(candle['low']) # prevent filling ram
-                new_candle_inc['high'].append(candle['high'])  # prevent filling ram
-                new_candle_inc['open'].append(candle['open'])  # prevent filling ram
-                new_candle_inc['close'].append(candle['close'])  # prevent filling ram
-                new_candle_inc['volume'].append(candle['volume'])  # prevent filling ram
-
-                self._data_source_increasing.stream(new_candle_inc, max_data_points)
-            else:
-                new_candle_dec['timestamp'].append(candle['timestamp']) 
-                new_candle_dec['low'].append(candle['low']) # prevent filling ram
-                new_candle_dec['high'].append(candle['high'])  # prevent filling ram
-                new_candle_dec['open'].append(candle['open'])  # prevent filling ram
-                new_candle_dec['close'].append(candle['close'])  # prevent filling ram
-                new_candle_dec['volume'].append(candle['volume'])  # prevent filling ram
-
-                self._data_source_decreasing.stream(new_candle_dec, max_data_points)
-
-            new_scaling_source['timestamp'].append(candle['timestamp'])
-            new_scaling_source['low'].append(candle['low'])
-            new_scaling_source['high'].append(candle['high'])
-
-            self.scaling_source.stream(new_scaling_source, max_data_points)
-            
-            push_notebook(handle=self.stream_plot)
-
-        self.kline_stream = self.provider.stream_klines(self, new_candle_callback = on_new_candle)
 
     def stop_stream(self):
         self.provider.twm.stop_socket(self.kline_stream)
