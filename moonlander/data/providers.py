@@ -42,7 +42,7 @@ class Binance(Provider):
         raise ValueError('No valid symbols exist for the pair ({}/{})'.format(base_asset, quote_asset))
         
 
-    def fetch_historical_klines(self, save = True):
+    def fetch_historical_klines(self, start_date, save = True):
         # Preprocess timeframe
         timeframe, timeframe_seconds = preprocess_timeframe(self.timeframe, valid_timeframes=['1-min', '3-min', '5-min', '15-min', '30-min', '1-hour', '2-hour', '4-hour', '6-hour', '8-hour', '12-hour', '1-day', '3-day', '1-week', '1-month'])
         binance_timeframe = self.timeframe_to_provider_timeframe(timeframe)
@@ -53,7 +53,7 @@ class Binance(Provider):
         else: 
             data_df = pd.DataFrame()
 
-        oldest_point, newest_point = minutes_of_new_data(self.symbol, binance_timeframe, data_df, source = "binance", client = self.client)
+        oldest_point, newest_point = minutes_of_new_data(self.symbol, start_date, binance_timeframe, data_df, source = "binance", client = self.client)
         delta_min = (newest_point - oldest_point).total_seconds()/60
         bin_size = timeframe_seconds / 60
         available_data = math.ceil(delta_min / bin_size)
@@ -62,7 +62,7 @@ class Binance(Provider):
             print('Downloading all available %s data for %s. Be patient..!' % (binance_timeframe, self.symbol))
 
         else: 
-            print('Downloading %d minutes of new data available for %s, i.e. %d instances of %s data.' % (delta_min, self.symbol, available_data, binance_timeframe))
+            print('Downloading %d minutes of data available for %s, i.e. %d instances of %s data.' % (delta_min, self.symbol, available_data, binance_timeframe))
 
         klines = self.client.get_historical_klines(self.symbol, binance_timeframe, oldest_point.strftime("%d %b %Y %H:%M:%S"), newest_point.strftime("%d %b %Y %H:%M:%S"))
         data = pd.DataFrame(klines, columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore' ])
@@ -125,7 +125,7 @@ class Binance(Provider):
 class CoinDCX(Provider):
     def __init__(self, api_key, api_secret):
         super().__init__(api_key, api_secret)
-        
+
     def validate_asset_config(self, base_asset, quote_asset, timeframe):
         self.fetch_valid_symbol(base_asset, quote_asset)
 

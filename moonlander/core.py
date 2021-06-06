@@ -16,7 +16,7 @@ from bokeh.io import show, push_notebook
 import moonlander
 
 class Asset:
-    def __init__(self, base_asset, quote_asset, provider, interval = '1-min'):
+    def __init__(self, base_asset, quote_asset, provider, start_date = None, interval = '1-min'):
         self.base_asset = base_asset.upper()
         self.quote_asset = quote_asset.upper()
 
@@ -25,13 +25,14 @@ class Asset:
         self.provider.validate_asset_config(base_asset, quote_asset, interval)
 
         # Data
+        self.start_date = start_date
         self.fetch_historical_data()
 
     def __repr__(self):
         return 'Asset(base_asset={}, quote_asset={})'.format(self.base_asset, self.quote_asset)
 
     def fetch_historical_data(self):
-        self.data = self.provider.fetch_historical_klines()
+        self.data = self.provider.fetch_historical_klines(self.start_date)
 
         inc = self.data.close > self.data.open
         dec = ~inc

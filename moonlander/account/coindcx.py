@@ -5,6 +5,7 @@ import json
 import time
 import math
 import requests
+import datetime as dt
 
 # Helpers
 def truncate(number, digits):
@@ -74,21 +75,35 @@ class CoinDCX:
             raise ValueError("Error: Not enough buying power to enter position")          
         else: 
             quantity = truncate(entry_capital / (entry_price), 1)
+            current_timestamp = time.time()
+            
+            # body = {
+            #     "side": "buy", 
+            #     "order_type": "limit_order",
+            #     "price_per_unit": entry_price,
+            #     "market": self.symbol, 
+            #     "total_quantity": quantity, 
+            #     "timestamp": int(round(current_timestamp * 1000))
+            # }
 
             body = {
                 "side": "buy", 
-                "order_type": "limit_order",
-                "price_per_unit": entry_price,
+                "order_type": "market_order",
                 "market": self.symbol, 
                 "total_quantity": quantity, 
-                "timestamp": int(round(time.time() * 1000))
+                "timestamp": int(round(current_timestamp * 1000))
             }
 
             data = self.make_request("https://api.coindcx.com/exchange/v1/orders/create", body)
             if data.get('status') == 'error':
                 raise RuntimeError('Could not place buy order!' + str(data.get('message')))
 
-            print('Buy order placed sucessfully...')
+            trade_time = dt.datetime.fromtimestamp(current_timestamp).strftime('%D %H:%M:%S')
+            print(100 * '-')
+            print('{} | BUY ORDER'.format(trade_time))
+            print('{} | units = {} | price = {}'.format(trade_time, quantity, data['orders'][0]['price_per_unit']))
+            print(100 * '-' + '\n')
+
             self.orders = data
 
     def sell(self, percent, current_price, stop_loss = math.inf):        
@@ -98,20 +113,34 @@ class CoinDCX:
             raise ValueError("Error: Current price cannot be negative.")                      
         else: 
             quantity = truncate(self.shares * percent, 1) 
+            current_timestamp = time.time()
+
+            # body = {
+            #     "side": "sell", 
+            #     "order_type": "limit_order",
+            #     "price_per_unit": current_price,
+            #     "market": self.symbol, 
+            #     "total_quantity": quantity, 
+            #     "timestamp": int(round(current_timestamp * 1000))
+            # }
 
             body = {
                 "side": "sell", 
-                "order_type": "limit_order",
-                "price_per_unit": current_price,
+                "order_type": "market_order",
                 "market": self.symbol, 
                 "total_quantity": quantity, 
-                "timestamp": int(round(time.time() * 1000))
+                "timestamp": int(round(current_timestamp * 1000))
             }
 
             data = self.make_request("https://api.coindcx.com/exchange/v1/orders/create", body)
             if data.get('status') == 'error':
                 raise RuntimeError('Could not place sell order!' + str(data.get('message')))
 
-            print('Sell order placed sucessfully...')
+            trade_time = dt.datetime.fromtimestamp(current_timestamp).strftime('%D %H:%M:%S')
+            print(100 * '-')
+            print('{} | SELL ORDER'.format(trade_time))
+            print('{} | units = {} | price = {}'.format(trade_time, quantity, data['orders'][0]['price_per_unit']))
+            print(100 * '-' + '\n')
+
             self.orders = data
                         

@@ -46,15 +46,16 @@ class TradingStrategyBase:
             indicator.update(self.data)
             indicator.lookback = indicator.values
 
-    def backtest(self, amount = 1000, start_date = None, relative_lookback_size = None, commision = 0, plot_results = True, show_trades = True):
+    def backtest(self, amount = 1000, start_date = None, relative_lookback_size = None, commision = 0, verbose = False, plot_results = True, show_trades = True):
         tracker = []
-        account = LocalAccount(amount, commision = commision)
+        account = LocalAccount(amount, commision = commision, verbose = verbose)
 
         # Setting custom backtest sizes
         self.data = self.asset.data.reset_index()
 
         if start_date is not None:
-            self.data = self.asset.data.loc[start_date:].reset_index()
+            start_date_dt = pd.to_datetime(datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S'))
+            self.data = self.asset.data.loc[start_date_dt:].reset_index()
 
         elif relative_lookback_size is not None:
             self.data = self.data.iloc[-relative_lookback_size:].reset_index(drop = True)
@@ -102,17 +103,20 @@ class TradingStrategyBase:
         final_price = self.data.iloc[-1]['close']
 
         strategy_returns = percent_change(account.initial_capital, account.total_value(final_price))
+        strategy_profit = profit(account.initial_capital, strategy_returns)
         buyhold_returns = percent_change(being_price, final_price)
+        buyhold_profit = profit(account.initial_capital, buyhold_returns)
 
-        print("Relative performance: {0}%".format(round(abs((strategy_returns - buyhold_returns) * 100 / buyhold_returns), 2)))
+        print("Relative Returns: {0}%".format(round((strategy_returns - buyhold_returns) * 100, 2)))
+        print("Relative Profit: {0}".format(round(strategy_profit - buyhold_profit, 2)))
         print()
 
         print("Strategy     : {0}%".format(round(strategy_returns*100, 2)))
-        print("Net Profit   : {0}".format(round(profit(account.initial_capital, strategy_returns), 2)))
+        print("Net Profit   : {0}".format(round(strategy_profit, 2)))
         print()
 
         print("Buy and Hold : {0}%".format(round(buyhold_returns*100, 2)))
-        print("Net Profit   : {0}".format(round(profit(account.initial_capital, buyhold_returns), 2)))
+        print("Net Profit   : {0}".format(round(buyhold_profit, 2)))
 
         buys  = len([t for t in account.trades if t.type == 'buy'])
         sells  = len([t for t in account.trades if t.type == 'sell'])
@@ -125,7 +129,7 @@ class TradingStrategyBase:
         print("\n---------------------------------------")
 
         if plot_performance:
-            self.chart(account, show_trades=show_trades)
+            self.chart(account, show_trades=show_trades, colored= True)
 
     def chart(self, account, colored = False, show_positions=True, show_trades=True, title="Equity Curve"):
         """Chart results.
@@ -172,18 +176,18 @@ class TradingStrategyBase:
                 try:
                     y = account.equity[np.where(self.data['timestamp'] == trade.date)[0][0]]
                     if trade.type == 'buy': 
-                        final_plot_layout[0].circle(trade.date, y, size=6, color='green', alpha=0.5)
+                        final_plot_layout[0].circle(trade.date, y, size=6, color='orange', alpha=0.5)
 
-                        final_plot_layout[1].circle(trade.date, trade.price, size=8, color='green', alpha=0.5, legend_label = 'Buy order')
+                        final_plot_layout[1].circle(trade.date, trade.price, size=8, color='orange', alpha=1, legend_label = 'Buy order')
                         # long_pos = bokeh.models.Span(location=trade.date,
                         #       dimension='height', line_color='green', line_alpha = 0.5,
                         #       line_dash='dashed', line_width=2)
                         # candle_plot.add_layout(long_pos)
 
                     elif trade.type == 'sell': 
-                        final_plot_layout[0].circle(trade.date, y, size=6, color='red', alpha=0.5)
+                        final_plot_layout[0].circle(trade.date, y, size=6, color='blue', alpha=0.5)
 
-                        final_plot_layout[1].circle(trade.date, trade.price, size=8, color='red', alpha=0.5, legend_label = 'Sell order')
+                        final_plot_layout[1].circle(trade.date, trade.price, size=8, color='blue', alpha=1, legend_label = 'Sell order')
                         # long_pos = bokeh.models.Span(location=trade.date,
                         #       dimension='height', line_color='red', line_alpha = 0.5,
                         #       line_dash='dashed', line_width=2)
@@ -195,6 +199,9 @@ class TradingStrategyBase:
         return bokeh.plotting.show(gridplot(final_plot_layout, ncols = 1))
 
     def execute(self, trading_account, max_data_points = 1000):
+        self.asset.fetch_historical_data()
+        self.data = self.asset.data.reset_index()
+
         self.setup()
         self.compute_indicators()
 
@@ -257,6 +264,6 @@ class TradingStrategyBase:
             push_notebook(handle=stream_plot)
 
             self.trading_account.update_shares_and_balances()
-            self.logic(self.data, self.trading_account)
+            self.logic(self.trading_account, self.data)
 
         self.kline_stream = self.asset.provider.stream_klines(self.asset, new_candle_callback = on_new_candle)

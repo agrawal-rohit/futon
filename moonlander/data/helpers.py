@@ -114,10 +114,12 @@ def preprocess_timeframe(timeframe, valid_timeframes):
 
     return optimal_timeframe, optimal_seconds
 
-def minutes_of_new_data(symbol, kline_size, data, source, client = None):
+def minutes_of_new_data(symbol, start_date, kline_size, data, source, client = None):
     # Get start date for data feetching
     if len(data) > 0:  
         start = data.index[-1]
+    elif start_date:
+        start = pd.to_datetime(dt.datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S'))
     elif source == 'binance' or source == 'coindcx':
         start = dt.datetime.strptime('1 Jan 2017', '%d %b %Y')
 
