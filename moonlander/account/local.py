@@ -59,11 +59,12 @@ class long_position(position):
 class LocalAccount():
     """An object representing an exchange account."""
 
-    def __init__(self, initial_capital, commision = 0):
+    def __init__(self, initial_capital, commision = 0, verbose = False):
         self.initial_capital = float(initial_capital)
         self.buying_power    = float(initial_capital)
 
         self.commision = commision
+        self.verbose = verbose
         
         self.date            = None
         self.active_position = None
@@ -94,6 +95,12 @@ class LocalAccount():
             else:
                 self.active_position = long_position(self.date, shares)
 
+            if self.verbose:
+                print(100 * '-')
+                print('{} | BUY ORDER'.format(self.date))
+                print('{} | units = {} | price = {}'.format(self.date, shares, entry_price))
+                print(100 * '-' + '\n')
+
             self.trades.append(trade(self.date,
                                     'buy',
                                     shares, 
@@ -106,11 +113,12 @@ class LocalAccount():
         elif current_price < 0:
             raise ValueError("Error: Current price cannot be negative.")                
         else: 
-        
-            if self.active_position:
+            
+            if self.active_position is not None:
+                quantity = self.active_position.shares * percent
                 self.trades.append(trade(self.date,
                                     'sell',
-                                    self.active_position.shares * percent, 
+                                    quantity, 
                                     current_price,
                                     stop_loss))
 
@@ -121,18 +129,19 @@ class LocalAccount():
                     self.buying_power += round(self.active_position.close(percent, current_price), 2)
 
                 self.active_position.close_date = self.date
+                if self.active_position.shares == 0:
+                    self.positions.append(self.active_position)
+                    self.active_position = None 
+
+                if self.verbose:
+                    print(100 * '-')
+                    print('{} | SELL ORDER'.format(self.date))
+                    print('{} | units = {} | price = {}'.format(self.date, quantity, current_price))
+                    print(100 * '-' + '\n')
 
             else:
                 # raise ValueError("No active position! Cannot sell yet.")
                 return
-
-            self.purge_positions()
-
-
-    def purge_positions(self):
-        if self.active_position.shares == 0:
-            self.positions.append(self.active_position)
-            self.active_position = None 
 
     def show_positions(self):
         """Show all account positions.""" 
@@ -140,6 +149,7 @@ class LocalAccount():
 
     def total_value(self, current_price):
         temporary = copy.deepcopy(self)
+        temporary.verbose = False
         if self.active_position:
             temporary.sell(1.0, current_price)
         return round(temporary.buying_power, 2)
