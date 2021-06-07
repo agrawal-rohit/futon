@@ -76,10 +76,8 @@ class LocalAccount():
     def buy(self, entry_capital, entry_price, stop_loss=0):
         entry_capital = float(entry_capital)
         
-        if entry_capital < 0: 
-            raise ValueError("Error: Entry capital must be positive")          
-        elif entry_price < 0: 
-            raise ValueError("Error: Entry price cannot be negative.")
+        if entry_capital <= 0: 
+            raise ValueError("Error: Entry capital must be positive")       
         elif self.buying_power < entry_capital: 
             raise ValueError("Error: Not enough buying power to enter position")          
         else: 
@@ -140,8 +138,7 @@ class LocalAccount():
                     print(100 * '-' + '\n')
 
             else:
-                # raise ValueError("No active position! Cannot sell yet.")
-                return
+                raise ValueError("No active position! Cannot sell yet.")
 
     def show_positions(self):
         """Show all account positions.""" 

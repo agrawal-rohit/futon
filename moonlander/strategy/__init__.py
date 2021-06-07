@@ -11,14 +11,9 @@ from bokeh.io import show, push_notebook
 
 from ..viz import create_candle_plot
 from ..account.local import LocalAccount
+from .helpers import profit, percent_change
 
-def percent_change(d1, d2):
-    return (d2 - d1) / d1
-
-def profit(initial_capital, multiplier):
-    return initial_capital * (multiplier + 1.0) - initial_capital
-
-class TradingStrategyBase:
+class TradingStrategy:
     def __init__(self, asset):
         if not isinstance(asset.data, pd.DataFrame):
             raise ValueError("Data must be a pandas dataframe")
@@ -40,10 +35,10 @@ class TradingStrategyBase:
         for indicator in self.indicators:
             indicator.compute(self.data)
 
-    def update_indicators(self):
+    def update_indicators(self, plot = True):
         # Compute values for all indicators
         for indicator in self.indicators:
-            indicator.update(self.data)
+            indicator.update(self.data, plot = plot)
             indicator.lookback = indicator.values
 
     def backtest(self, amount = 1000, start_date = None, relative_lookback_size = None, commision = 0, verbose = False, plot_results = True, show_trades = True):
@@ -176,75 +171,65 @@ class TradingStrategyBase:
                 try:
                     y = account.equity[np.where(self.data['timestamp'] == trade.date)[0][0]]
                     if trade.type == 'buy': 
-                        final_plot_layout[0].circle(trade.date, y, size=6, color='orange', alpha=0.5)
-
-                        final_plot_layout[1].circle(trade.date, trade.price, size=8, color='orange', alpha=1, legend_label = 'Buy order')
-                        # long_pos = bokeh.models.Span(location=trade.date,
-                        #       dimension='height', line_color='green', line_alpha = 0.5,
-                        #       line_dash='dashed', line_width=2)
-                        # candle_plot.add_layout(long_pos)
+                        final_plot_layout[0].circle(trade.date, y, size=6, color='magenta', alpha=0.5)
+                        final_plot_layout[1].circle(trade.date, trade.price, size=8, color='magenta', alpha=1, legend_label = 'Buy order')
 
                     elif trade.type == 'sell': 
                         final_plot_layout[0].circle(trade.date, y, size=6, color='blue', alpha=0.5)
-
                         final_plot_layout[1].circle(trade.date, trade.price, size=8, color='blue', alpha=1, legend_label = 'Sell order')
-                        # long_pos = bokeh.models.Span(location=trade.date,
-                        #       dimension='height', line_color='red', line_alpha = 0.5,
-                        #       line_dash='dashed', line_width=2)
-                        # candle_plot.add_layout(long_pos)
 
                 except:
                     pass
             
         return bokeh.plotting.show(gridplot(final_plot_layout, ncols = 1))
 
-    def execute(self, trading_account, max_data_points = 1000):
+    def execute(self, trading_account, plot = False):
         self.asset.fetch_historical_data()
         self.data = self.asset.data.reset_index()
+        self.trading_account = trading_account
 
         self.setup()
         self.compute_indicators()
 
-        candle_plot, volume_plot = create_candle_plot(self.asset, fig_height=400)
-        # Inital plot with candles and indicators
-        final_plot_layout = []
+        if plot:
+            candle_plot, volume_plot = create_candle_plot(self.asset, fig_height=400)
+            # Inital plot with candles and indicators
+            final_plot_layout = []
 
-        indicator_plots = [candle_plot, volume_plot]
+            indicator_plots = [candle_plot, volume_plot]
 
-        # Plot Indicators
-        for indicator in self.indicators:
-            indicator_plots = indicator.plot_indicator(indicator_plots)
-        final_plot_layout += indicator_plots
+            # Plot Indicators
+            for indicator in self.indicators:
+                indicator_plots = indicator.plot_indicator(indicator_plots)
+            final_plot_layout += indicator_plots
 
-        stream_plot = show(gridplot(final_plot_layout, ncols = 1), notebook_handle = True)
-
-        self.trading_account = trading_account
+            stream_plot = show(gridplot(final_plot_layout, ncols = 1), notebook_handle = True)
 
         def on_new_candle(candle):
-            print('{} | Plotting new candle ...'.format(candle['timestamp']))
-            print(candle)
+            print('{} | Current Close: {}'.format(candle['timestamp'], candle['close']))
 
-            new_candle_dict=dict(
-                timestamp=[candle['timestamp']],
-                low=[candle['low']],
-                high=[candle['high']],
-                open=[candle['open']],
-                close=[candle['close']],
-                volume=[candle['volume']]
-            )
+            if plot:
+                new_candle_dict=dict(
+                    timestamp=[candle['timestamp']],
+                    low=[candle['low']],
+                    high=[candle['high']],
+                    open=[candle['open']],
+                    close=[candle['close']],
+                    volume=[candle['volume']]
+                )
 
-            if candle['close'] > candle['open']:
-                self.asset._data_source_increasing.stream(new_candle_dict)
-            else:
-                self.asset._data_source_decreasing.stream(new_candle_dict)
+                if candle['close'] > candle['open']:
+                    self.asset._data_source_increasing.stream(new_candle_dict)
+                else:
+                    self.asset._data_source_decreasing.stream(new_candle_dict)
 
 
-            new_scaling_source=dict(
-                timestamp=[candle['timestamp']],
-                low=[candle['low']],
-                high=[candle['high']]
-            )
-            self.asset.scaling_source.stream(new_scaling_source)
+                new_scaling_source=dict(
+                    timestamp=[candle['timestamp']],
+                    low=[candle['low']],
+                    high=[candle['high']]
+                )
+                self.asset.scaling_source.stream(new_scaling_source)
             
 
             # Execute Live Trading Logic
@@ -259,9 +244,11 @@ class TradingStrategyBase:
             
             self.data = self.data.append(new_candle_row_dict, ignore_index=True)
             self.data = self.data.iloc[-1000:]
-            self.update_indicators()
 
-            push_notebook(handle=stream_plot)
+            self.update_indicators(plot = False)
+
+            if plot:
+                push_notebook(handle=stream_plot)
 
             self.trading_account.update_shares_and_balances()
             self.logic(self.trading_account, self.data)
