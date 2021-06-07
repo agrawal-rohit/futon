@@ -7,6 +7,8 @@ import math
 import json 
 from binance.client import Client
 from binance import ThreadedWebsocketManager
+import websocket
+import threading
 
 class Provider:
     def __init__(self, api_key, api_secret):
@@ -90,11 +92,43 @@ class Binance(Provider):
         print('All caught up..!')
         return data_df
 
+    # def stream_klines(self, asset, new_candle_callback):
+
+    #     def handle_socket_message(msg):
+    #         # If first candle or new candle received
+    #         print(msg)
+            
+    #         cleaned_timestamp = int(str(msg['k']['T'])[:-3])
+    #         current_timestamp = pd.to_datetime(cleaned_timestamp, unit='s')
+    #         low = float(msg['k']['l'])
+    #         high = float(msg['k']['h'])
+    #         op = float(msg['k']['o'])
+    #         close = float(msg['k']['c'])
+    #         volume = float(msg['k']['v'])   
+    #         isFinished = msg['k']['x']
+
+    #         current_candle = {
+    #             "timestamp": current_timestamp,
+    #             "low": low,
+    #             "high": high,
+    #             "open": op,
+    #             "close": close,
+    #             "volume": volume,
+    #             "isFinished": isFinished
+    #         }
+
+    #         if isFinished and current_timestamp not in asset.data.index:
+    #             new_candle_callback(current_candle)
+
+    #     binance_timeframe = self.timeframe_to_provider_timeframe(self.timeframe)
+    #     return self.twm.start_kline_socket(callback=handle_socket_message, symbol=self.symbol, interval = binance_timeframe)
+
     def stream_klines(self, asset, new_candle_callback):
 
-        def handle_socket_message(msg):
+        def handle_socket_message(ws, msg):
             # If first candle or new candle received
-
+            msg = json.loads(msg)
+            
             cleaned_timestamp = int(str(msg['k']['T'])[:-3])
             current_timestamp = pd.to_datetime(cleaned_timestamp, unit='s')
             low = float(msg['k']['l'])
@@ -118,8 +152,12 @@ class Binance(Provider):
                 new_candle_callback(current_candle)
 
         binance_timeframe = self.timeframe_to_provider_timeframe(self.timeframe)
-        return self.twm.start_kline_socket(callback=handle_socket_message, symbol=self.symbol, interval = binance_timeframe)
+        websocket_url = "wss://stream.binance.com:9443/ws/{}@kline_{}".format(self.symbol.lower(), binance_timeframe)
+        websocket.enableTrace(False)
+        ws = websocket.WebSocketApp(websocket_url,
+                                on_message = handle_socket_message)
 
+        ws.run_forever()
 
 
 class CoinDCX(Provider):
