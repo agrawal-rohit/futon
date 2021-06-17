@@ -1,4 +1,4 @@
-from moonlander.account import LocalAccount
+from moonlander.account.local import LocalAccount
 import unittest
 
 class Methods(unittest.TestCase):
@@ -46,18 +46,18 @@ class Methods(unittest.TestCase):
     
     def test_commision(self):
         # ten percent commission
-        a = LocalAccount(1000)
-        a.buy(100, 20, commission=0.1)
+        a = LocalAccount(1000, commision=0.01)
+        a.buy(100, 20)
         self.assertEqual(a.buying_power, 900)
-        self.assertEqual(a.total_value(25), 1013.64)
+        self.assertEqual(a.total_value(25), 1022.52)
 
-        a.sell(0.5, 30, commission=0.1)
-        self.assertEqual(a.buying_power, 961.36) 
-        self.assertEqual(a.total_value(25), 1018.18)
+        a.sell(0.5, 30)
+        self.assertEqual(a.buying_power, 973.51) 
+        self.assertEqual(a.total_value(25), 1034.77)
 
-        a.sell(1.0, 50, commission=0.1)
-        self.assertEqual(a.buying_power, 1063.63)
-        self.assertEqual(a.total_value(100), 1063.63)
+        a.sell(1.0, 50)
+        self.assertEqual(a.buying_power, 1096.03)
+        self.assertEqual(a.total_value(100), 1096.03)
     
 if __name__ == '__main__':
     unittest.main()
