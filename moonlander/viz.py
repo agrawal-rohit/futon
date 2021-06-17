@@ -3,7 +3,7 @@ from bokeh.models import HoverTool, CustomJS, Range1d
 from bokeh.io import show
 from math import pi, inf
 
-def create_candle_plot(asset, fig_width = 1000, fig_height = 600, colored = True):
+def create_candle_plot(asset, start_date = None, fig_width = 1000, fig_height = 600, colored = True):
     if colored:
         INCREASING_COLOR = '#4CAF50'
         DECREASING_COLOR = '#F44336'

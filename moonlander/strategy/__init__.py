@@ -135,10 +135,10 @@ class TradingStrategy:
         """     
 
         # Plot candle plot
-        self.candle_plot, _ = create_candle_plot(self.asset, fig_height=400, colored=colored)
+        self.candle_plot, _ = create_candle_plot(self.asset, fig_height=300, colored=colored)
         
         # Plot equity curve
-        p = bokeh.plotting.figure(x_axis_type="datetime", plot_width=1000, plot_height=300, title=title, x_range = self.candle_plot.x_range)
+        p = bokeh.plotting.figure(x_axis_type="datetime", plot_width=1000, plot_height=200, title=title, x_range = self.candle_plot.x_range)
         p.grid.grid_line_alpha = 0.3
         p.xaxis.axis_label = 'Date'
         p.yaxis.axis_label = 'Equity'

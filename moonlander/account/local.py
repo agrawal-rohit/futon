@@ -78,6 +78,8 @@ class LocalAccount():
         
         if entry_capital <= 0: 
             raise ValueError("Error: Entry capital must be positive")       
+        elif entry_price < 0: 
+            raise ValueError("Error: Entry Price must be positive")     
         elif self.buying_power < entry_capital: 
             raise ValueError("Error: Not enough buying power to enter position")          
         else: 
@@ -147,6 +149,6 @@ class LocalAccount():
     def total_value(self, current_price):
         temporary = copy.deepcopy(self)
         temporary.verbose = False
-        if self.active_position:
+        if temporary.active_position:
             temporary.sell(1.0, current_price)
         return round(temporary.buying_power, 2)

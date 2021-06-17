@@ -1,19 +1,9 @@
-from moonlander.data import providers
-import pandas as pd
 import numpy as np
-import datetime as dt
-from math import pi
-
-from . import data
 from .viz import create_candle_plot
 
 from bokeh.plotting import figure, ColumnDataSource, show
 from bokeh.layouts import gridplot
-from bokeh.models import HoverTool, CustomJS, Range1d
-from bokeh.events import Pan
-from bokeh.io import show, push_notebook
-
-import moonlander
+from bokeh.io import show
 
 class Asset:
     def __init__(self, base_asset, quote_asset, provider, start_date = None, interval = '1-min'):
@@ -93,6 +83,3 @@ class Asset:
         mean_return = round(self.mean_return('Y') * 100, 3)
         risk = round(self.std_return('Y') * 100, 3)
         print('Return: {}% | Risk: {}%'.format(mean_return, risk))
-
-    def stop_stream(self):
-        self.provider.twm.stop_socket(self.kline_stream)

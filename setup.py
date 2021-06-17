@@ -12,7 +12,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 with open('LICENSE.md', "r", encoding="utf-8") as f:
-    license = f.read()
+    _license = f.read()
 
 setup(
     name="moonlander",
@@ -23,10 +23,9 @@ setup(
     url='',
     author='Rohit Agrawal',
     author_email="rohitagrawalofficialmail@gmail.com",
-    license=license,
+    license=_license,
     classifiers=classifiers,
     keywords="",
-    test_suite="tests",
     packages=find_packages(exclude=('tests', 'docs')),
     python_requires=">=3.6",
     install_requires=['']
