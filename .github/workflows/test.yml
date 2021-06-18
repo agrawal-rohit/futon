@@ -1,5 +1,5 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-name: Run unit tests on the python package
+name: Build
 
 on:
   pull_request:
@@ -9,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: Run unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -32,6 +33,7 @@ jobs:
           sudo ./configure
           sudo make
           sudo make install
+          pip install TA-Lib
 
       - name: Install dependencies
         run: |

@@ -1,4 +1,4 @@
-name: Run unit tests and publish Python distributions to PyPI and TestPyPI
+name: Build and Publish
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-build-publish:
-    name: Run unit tests
+    name: Run unit tests, create build and publish to PyPI
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
@@ -32,6 +32,7 @@ jobs:
           sudo ./configure
           sudo make
           sudo make install
+          pip install TA-Lib
 
       - name: Install dependencies
         run: |
