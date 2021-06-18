@@ -23,6 +23,16 @@ jobs:
         with:
           poetry-version: 1.1.6
 
+      - name: Install TA-lib
+        run: |
+          sudo apt install build-essential wget -y
+          wget https://artiya4u.keybase.pub/TA-lib/ta-lib-0.4.0-src.tar.gz
+          tar -xvf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib/
+          sudo ./configure
+          sudo make
+          sudo make install
+
       - name: Install dependencies
         run: |
           poetry update

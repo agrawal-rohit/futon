@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  test-build-publish:
     name: Run unit tests
     runs-on: ubuntu-18.04
     steps:
@@ -22,6 +22,16 @@ jobs:
         uses: abatilo/actions-poetry@v2.0.0
         with:
           poetry-version: 1.1.6
+
+      - name: Install TA-lib
+        run: |
+          sudo apt install build-essential wget -y
+          wget https://artiya4u.keybase.pub/TA-lib/ta-lib-0.4.0-src.tar.gz
+          tar -xvf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib/
+          sudo ./configure
+          sudo make
+          sudo make install
 
       - name: Install dependencies
         run: |
@@ -42,27 +52,6 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           files: coverage.xml
-
-  build-n-publish:
-    name: Build and publish Python distribution
-    needs: test
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Setup Poetry
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: 1.1.6
-
-      - name: Install dependencies
-        run: |
-          poetry install
 
       - name: Build package
         run: poetry build
