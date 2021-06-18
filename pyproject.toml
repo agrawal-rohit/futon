@@ -43,6 +43,9 @@ websocket_client = "1.1.0"
 [tool.poetry.dev-dependencies]
 coverage = "5.3"
 flake8 = "*"
+pipenv-to-requirements = "*"
+pre-commit = "*"
+black = "*"
 # [tool.poetry.scripts]
 # test = "python -m unittest discover"
 # coverage = "coverage run --source=peepop -m unittest discover && coverage report -m && coverage xml"
