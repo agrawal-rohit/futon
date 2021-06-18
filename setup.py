@@ -1,23 +1,23 @@
 from setuptools import setup, find_packages
 
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Financial and Insurance Industry",
     "Operating System :: OS Independent",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3"
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.6"
 ]
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open('LICENSE.md', "r", encoding="utf-8") as f:
+with open('LICENSE', "r", encoding="utf-8") as f:
     _license = f.read()
 
 setup(
-    name="moonlander",
+    name="peepop",
     version="0.0.1",
-    description="stock trading",
+    description="Create automated cryptocurrency bots that trade for you while you sleep",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='',

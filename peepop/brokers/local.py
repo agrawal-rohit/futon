@@ -56,7 +56,7 @@ class long_position(position):
         self.shares *= 1.0 - percent
         return shares * percent * current_price
 
-class LocalAccount():
+class Local():
     """An object representing an exchange account."""
 
     def __init__(self, initial_capital, commision = 0, verbose = False):
