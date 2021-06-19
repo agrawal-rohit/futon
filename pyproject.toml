@@ -57,7 +57,7 @@ tqdm = "4.61.1"
 websocket_client = "1.1.0"
 
 [tool.poetry.dev-dependencies]
-coverage = "5.3"
+coverage = "*"
 flake8 = "*"
 pipenv-to-requirements = "*"
 pre-commit = "*"
