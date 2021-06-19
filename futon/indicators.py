@@ -1401,10 +1401,8 @@ class TRIX(Indicator):
 
         # Plotting
         self.legend_label = "TRIX_{}".format(kwargs.get("timeperiod"))
-        self.title = (
-            "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA ({})".format(
-                kwargs.get("timeperiod")
-            )
+        self.title = "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA ({})".format(
+            kwargs.get("timeperiod")
         )
 
     def compute_function(self, processed_data):
