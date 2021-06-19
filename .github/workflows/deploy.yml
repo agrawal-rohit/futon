@@ -39,8 +39,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install
-          pip install coverage
+          poetry update
 
       - name: Lint with flake8
         run: |
@@ -51,7 +50,7 @@ jobs:
 
       - name: Test with unittest and compute coverage
         run: |
-          coverage run --source=futon -m unittest discover && coverage report -m && coverage xml
+          poetry run coverage run --source=futon -m unittest discover && coverage report -m && coverage xml
 
       - name: Upload coverage to CodeCov
         uses: codecov/codecov-action@v1
