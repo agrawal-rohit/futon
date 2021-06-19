@@ -1,9 +1,9 @@
 <p align="center">
-<img alt="Logo" src="./imgs/logo.png" width="350" >
+<img width="341" alt="Logo" src="https://user-images.githubusercontent.com/29514438/122650855-bd657b00-d152-11eb-8296-1407f832bd91.png">
 </p>
 
 <p align="center">
-<img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/agrawal-rohit/futon/Build%20and%20Publish">
+<img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/agrawal-rohit/futon/Build">
 <!-- <img alt="PyPI - Status" src="https://img.shields.io/pypi/status/futon"> -->
 <img alt="Codecov" src="https://img.shields.io/codecov/c/github/agrawal-rohit/futon">
 <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/futon">
