@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "peepop"
+name = "futon"
 version = "0.1.0"
-description = "Create automated cryptocurrency bots that trade for you while you sleep"
+description = "Create automated bots that trade for you while you sleep"
 authors = ["Rohit Agrawal <rohitagrawalofficialmail@gmail.com>"]
 license = "GPL-3.0-only"
 readme = "README.md"
 homepage = ""
-repository = "https://github.com/hackersandslackers/python-poetry-tutorial/"
-documentation = "https://hackersandslackers.com/python-poetry/"
+repository = "https://github.com/agrawal-rohit/futon"
+documentation = "https://github.com/agrawal-rohit/futon"
 keywords = [
     "Stocks",
     "Cryptocurrencies",
@@ -16,8 +16,10 @@ keywords = [
     "Trading bots"
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Financial and Insurance Industry"
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 include = ["CHANGELOG.md"]
 
@@ -27,9 +29,23 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 79
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7.1"
 python_binance = "1.0.10"
 bokeh = "2.3.2"
 TA_Lib = "0.4.20"
@@ -48,4 +64,4 @@ pre-commit = "*"
 black = "*"
 # [tool.poetry.scripts]
 # test = "python -m unittest discover"
-# coverage = "coverage run --source=peepop -m unittest discover && coverage report -m && coverage xml"
+# coverage = "coverage run --source=futon -m unittest discover && coverage report -m && coverage xml"

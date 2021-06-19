@@ -47,7 +47,7 @@ jobs:
 
       - name: Test with unittest and compute coverage
         run: |
-          poetry run coverage run --source=peepop -m unittest discover && coverage report -m && coverage xml
+          poetry run coverage run --source=futon -m unittest discover && coverage report -m && coverage xml
 
       - name: Upload coverage to CodeCov
         uses: codecov/codecov-action@v1

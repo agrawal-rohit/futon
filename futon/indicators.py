@@ -68,7 +68,9 @@ class Indicator:
         self.values = np.append(self.values, [new_value])
 
         if plot:
-            new_value_source = dict(timestamp=[latest_timestamp], value=[new_value])
+            new_value_source = dict(
+                timestamp=[latest_timestamp], value=[new_value]
+            )
 
             self.cds.stream(new_value_source)
 
@@ -124,7 +126,9 @@ class BollingerBands(Indicator):
 
     def compute(self, data, plot=True):
         processed_data = self.preprocess_dataframe(data)
-        self.upper, self.middle, self.lower = self.compute_function(processed_data)
+        self.upper, self.middle, self.lower = self.compute_function(
+            processed_data
+        )
         self.values = list(zip(self.upper, self.middle, self.lower))
 
         if plot:
@@ -139,7 +143,9 @@ class BollingerBands(Indicator):
 
     def update(self, updated_data, plot=True):
         processed_data = self.preprocess_dataframe(updated_data)
-        new_uppers, new_middles, new_lowers = self.compute_function(processed_data)
+        new_uppers, new_middles, new_lowers = self.compute_function(
+            processed_data
+        )
 
         new_upper = new_uppers[-1]
         new_middle = new_middles[-1]
@@ -150,7 +156,9 @@ class BollingerBands(Indicator):
         self.middle = np.append(self.middle, [new_middle])
         self.lower = np.append(self.lower, [new_lower])
 
-        self.values = np.append(self.values, [(new_upper, new_middle, new_lower)])
+        self.values = np.append(
+            self.values, [(new_upper, new_middle, new_lower)]
+        )
 
         if plot:
             new_value_source = dict(
@@ -245,7 +253,9 @@ class ExponentialMovingAverage(Indicator):
 
         # Plotting
         self.legend_label = "EMA_{}".format(kwargs.get("timeperiod"))
-        self.title = "Exponential Moving Average ({})".format(kwargs.get("timeperiod"))
+        self.title = "Exponential Moving Average ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.EMA(processed_data, **self.kwargs)
@@ -311,10 +321,8 @@ class MESAAdaptiveMovingAverage(Indicator):
         self.legend_label = "MAMA_{}-{}".format(
             kwargs.get("fastlimit"), kwargs.get("slowlimit")
         )
-        self.title = (
-            "MESA Adaptive Moving Average (fastlimit = {}, slowlimit = {})".format(
-                kwargs.get("fastlimit"), kwargs.get("slowlimit")
-            )
+        self.title = "MESA Adaptive Moving Average (fastlimit = {}, slowlimit = {})".format(
+            kwargs.get("fastlimit"), kwargs.get("slowlimit")
         )
 
     def compute_function(self, processed_data):
@@ -406,7 +414,9 @@ class MidpointOverPeriod(Indicator):
 
         # Plotting
         self.legend_label = "MIDPOINT_{}".format(kwargs.get("timeperiod"))
-        self.title = "Midpoint over period ({})".format(kwargs.get("timeperiod"))
+        self.title = "Midpoint over period ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.MIDPOINT(processed_data, **self.kwargs)
@@ -419,7 +429,9 @@ class MidpointPriceOverPeriod(Indicator):
 
         # Plotting
         self.legend_label = "MIDPRICE_{}".format(kwargs.get("timeperiod"))
-        self.title = "Midpoint Price over period ({})".format(kwargs.get("timeperiod"))
+        self.title = "Midpoint Price over period ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.MIDPRICE(processed_data, **self.kwargs)
@@ -462,7 +474,9 @@ class SimpleMovingAverage(Indicator):
 
         # Plotting
         self.legend_label = "SMA_{}".format(kwargs.get("timeperiod"))
-        self.title = "Simple Moving Average ({})".format(kwargs.get("timeperiod"))
+        self.title = "Simple Moving Average ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.SMA(processed_data, **self.kwargs)
@@ -505,7 +519,9 @@ class TriangularMovingAverage(Indicator):
 
         # Plotting
         self.legend_label = "TRIMA_{}".format(kwargs.get("timeperiod"))
-        self.title = "Triangular Moving Average ({})".format(kwargs.get("timeperiod"))
+        self.title = "Triangular Moving Average ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.TRIMA(processed_data, **self.kwargs)
@@ -518,7 +534,9 @@ class WeightedMovingAverage(Indicator):
 
         # Plotting
         self.legend_label = "WMA_{}".format(kwargs.get("timeperiod"))
-        self.title = "Weighted Moving Average ({})".format(kwargs.get("timeperiod"))
+        self.title = "Weighted Moving Average ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.WMA(processed_data, **self.kwargs)
@@ -712,7 +730,9 @@ class CommodityChannelIndex(Indicator):
 
         # Plotting
         self.legend_label = "CCI_{}".format(kwargs.get("timeperiod"))
-        self.title = "Commodity Channel Index ({})".format(kwargs.get("timeperiod"))
+        self.title = "Commodity Channel Index ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.CCI(processed_data, **self.kwargs)
@@ -725,7 +745,9 @@ class ChandeMomentumOscillator(Indicator):
 
         # Plotting
         self.legend_label = "CMO_{}".format(kwargs.get("timeperiod"))
-        self.title = "Chande Momentum Oscillator ({})".format(kwargs.get("timeperiod"))
+        self.title = "Chande Momentum Oscillator ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.CMO(processed_data, **self.kwargs)
@@ -738,7 +760,9 @@ class DirectionalMovementIndex(Indicator):
 
         # Plotting
         self.legend_label = "DX_{}".format(kwargs.get("timeperiod"))
-        self.title = "Directional Movement Index ({})".format(kwargs.get("timeperiod"))
+        self.title = "Directional Movement Index ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.DX(processed_data, **self.kwargs)
@@ -765,12 +789,10 @@ class MACD(Indicator):
             kwargs.get("slowperiod"),
             kwargs.get("signalperiod"),
         )
-        self.title = (
-            "MACD (fastperiod = {}, slowperiod = {}, signalperiod = {})".format(
-                kwargs.get("fastperiod"),
-                kwargs.get("slowperiod"),
-                kwargs.get("signalperiod"),
-            )
+        self.title = "MACD (fastperiod = {}, slowperiod = {}, signalperiod = {})".format(
+            kwargs.get("fastperiod"),
+            kwargs.get("slowperiod"),
+            kwargs.get("signalperiod"),
         )
 
     def compute_function(self, processed_data):
@@ -820,7 +842,9 @@ class MACD(Indicator):
         self.macdsignal = np.append(self.macdsignal, [new_macdsignal])
         self.macdhist = np.append(self.macdhist, [new_macdhist])
 
-        self.values = np.append(self.values, [(new_macd, new_macdsignal, new_macdhist)])
+        self.values = np.append(
+            self.values, [(new_macd, new_macdsignal, new_macdhist)]
+        )
 
         if plot:
             new_value_source = dict(
@@ -833,8 +857,12 @@ class MACD(Indicator):
 
             self.cds.stream(new_value_source)
 
-            up = [True if val > 0 else False for val in self.cds.data["macdhist"]]
-            down = [True if val < 0 else False for val in self.cds.data["macdhist"]]
+            up = [
+                True if val > 0 else False for val in self.cds.data["macdhist"]
+            ]
+            down = [
+                True if val < 0 else False for val in self.cds.data["macdhist"]
+            ]
 
             self.view_upper = bokeh.models.CDSView(
                 source=self.cds, filters=[bokeh.models.BooleanFilter(up)]
@@ -872,7 +900,8 @@ class MACD(Indicator):
 
                 bar_width = (
                     (
-                        self.cds.data["timestamp"][1] - self.cds.data["timestamp"][0]
+                        self.cds.data["timestamp"][1]
+                        - self.cds.data["timestamp"][0]
                     ).seconds
                     * 1000
                     * 0.6
@@ -920,7 +949,8 @@ class MACD(Indicator):
 
                 bar_width = (
                     (
-                        self.cds.data["timestamp"][1] - self.cds.data["timestamp"][0]
+                        self.cds.data["timestamp"][1]
+                        - self.cds.data["timestamp"][0]
                     ).seconds
                     * 1000
                     * 0.6
@@ -969,7 +999,9 @@ class MinusDirectionalIndicator(Indicator):
 
         # Plotting
         self.legend_label = "MINUS_DI_{}".format(kwargs.get("timeperiod"))
-        self.title = "Minus Directional Indicator ({})".format(kwargs.get("timeperiod"))
+        self.title = "Minus Directional Indicator ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.MINUS_DI(processed_data, **self.kwargs)
@@ -982,7 +1014,9 @@ class MinusDirectionalMovement(Indicator):
 
         # Plotting
         self.legend_label = "MINUS_DM_{}".format(kwargs.get("timeperiod"))
-        self.title = "Minus Directional Movement ({})".format(kwargs.get("timeperiod"))
+        self.title = "Minus Directional Movement ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.MINUS_DM(processed_data, **self.kwargs)
@@ -1008,7 +1042,9 @@ class PlusDirectionalIndicator(Indicator):
 
         # Plotting
         self.legend_label = "PLUS_DI_{}".format(kwargs.get("timeperiod"))
-        self.title = "Plus Directional Indicator ({})".format(kwargs.get("timeperiod"))
+        self.title = "Plus Directional Indicator ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.PLUS_DI(processed_data, **self.kwargs)
@@ -1021,7 +1057,9 @@ class PlusDirectionalMovement(Indicator):
 
         # Plotting
         self.legend_label = "PLUS_DM_{}".format(kwargs.get("timeperiod"))
-        self.title = "Plus Directional Movement ({})".format(kwargs.get("timeperiod"))
+        self.title = "Plus Directional Movement ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.PLUS_DM(processed_data, **self.kwargs)
@@ -1036,10 +1074,8 @@ class PercentagePriceOscillator(Indicator):
         self.legend_label = "PPO_{}_{}".format(
             kwargs.get("fastperiod"), kwargs.get("slowperiod")
         )
-        self.title = (
-            "Percentage Price Oscillator (fastperiod = {}, slowperiod = {})".format(
-                kwargs.get("fastperiod"), kwargs.get("slowperiod")
-            )
+        self.title = "Percentage Price Oscillator (fastperiod = {}, slowperiod = {})".format(
+            kwargs.get("fastperiod"), kwargs.get("slowperiod")
         )
 
     def compute_function(self, processed_data):
@@ -1066,7 +1102,9 @@ class RateOfChangePercentage(Indicator):
 
         # Plotting
         self.legend_label = "ROCP_{}".format(kwargs.get("timeperiod"))
-        self.title = "Rate of change percentage ({})".format(kwargs.get("timeperiod"))
+        self.title = "Rate of change percentage ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.ROCP(processed_data, **self.kwargs)
@@ -1079,7 +1117,9 @@ class RateOfChangeRatio(Indicator):
 
         # Plotting
         self.legend_label = "ROCR_{}".format(kwargs.get("timeperiod"))
-        self.title = "Rate of change ratio ({})".format(kwargs.get("timeperiod"))
+        self.title = "Rate of change ratio ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.ROCR(processed_data, **self.kwargs)
@@ -1107,7 +1147,9 @@ class RelativeStrengthIndex(Indicator):
 
         # Plotting
         self.legend_label = "RSI_{}".format(kwargs.get("timeperiod"))
-        self.title = "Relative Strength Index ({})".format(kwargs.get("timeperiod"))
+        self.title = "Relative Strength Index ({})".format(
+            kwargs.get("timeperiod")
+        )
 
     def compute_function(self, processed_data):
         return ta.RSI(processed_data, **self.kwargs)
@@ -1142,7 +1184,9 @@ class RelativeStrengthIndex(Indicator):
                 )
 
                 p.add_layout(
-                    bokeh.models.BoxAnnotation(top=30, fill_alpha=0.1, fill_color="red")
+                    bokeh.models.BoxAnnotation(
+                        top=30, fill_alpha=0.1, fill_color="red"
+                    )
                 )
                 p.add_layout(
                     bokeh.models.BoxAnnotation(
@@ -1173,7 +1217,9 @@ class RelativeStrengthIndex(Indicator):
                 )
 
                 plots[0].add_layout(
-                    bokeh.models.BoxAnnotation(top=30, fill_alpha=0.1, fill_color="red")
+                    bokeh.models.BoxAnnotation(
+                        top=30, fill_alpha=0.1, fill_color="red"
+                    )
                 )
                 plots[0].add_layout(
                     bokeh.models.BoxAnnotation(
@@ -1204,7 +1250,9 @@ class StochasticSlow(Indicator):
         # Plotting
         self.k_color = self.get_color(k_color)
         self.d_color = self.get_color(d_color)
-        self.legend_label = "STOCH_{}_{}_{}".format(timeperiod, smoothk, smoothd)
+        self.legend_label = "STOCH_{}_{}_{}".format(
+            timeperiod, smoothk, smoothd
+        )
         self.title = "Stochastic Oscillator Slow (timeperiod = {}, smoothk = {}, smoothd = {})".format(
             timeperiod, smoothk, smoothd
         )
@@ -1292,7 +1340,9 @@ class StochasticSlow(Indicator):
                 )
 
                 p.add_layout(
-                    bokeh.models.BoxAnnotation(top=20, fill_alpha=0.1, fill_color="red")
+                    bokeh.models.BoxAnnotation(
+                        top=20, fill_alpha=0.1, fill_color="red"
+                    )
                 )
                 p.add_layout(
                     bokeh.models.BoxAnnotation(
@@ -1331,7 +1381,9 @@ class StochasticSlow(Indicator):
                 )
 
                 plots[0].add_layout(
-                    bokeh.models.BoxAnnotation(top=20, fill_alpha=0.1, fill_color="red")
+                    bokeh.models.BoxAnnotation(
+                        top=20, fill_alpha=0.1, fill_color="red"
+                    )
                 )
                 plots[0].add_layout(
                     bokeh.models.BoxAnnotation(
@@ -1349,8 +1401,10 @@ class TRIX(Indicator):
 
         # Plotting
         self.legend_label = "TRIX_{}".format(kwargs.get("timeperiod"))
-        self.title = "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA ({})".format(
-            kwargs.get("timeperiod")
+        self.title = (
+            "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA ({})".format(
+                kwargs.get("timeperiod")
+            )
         )
 
     def compute_function(self, processed_data):
@@ -1423,11 +1477,13 @@ class SuperTrend(Indicator):
                 ) / self.kwargs.get("timeperiod")
 
         data["BUB"] = round(
-            ((data.high + data.low) / 2) + (self.kwargs.get("factor") * data["ATR"]),
+            ((data.high + data.low) / 2)
+            + (self.kwargs.get("factor") * data["ATR"]),
             2,
         )
         data["BLB"] = round(
-            ((data.high + data.low) / 2) - (self.kwargs.get("factor") * data["ATR"]),
+            ((data.high + data.low) / 2)
+            - (self.kwargs.get("factor") * data["ATR"]),
             2,
         )
 

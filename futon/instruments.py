@@ -69,11 +69,15 @@ class Crypto:
         self.calculate_log_returns()
 
     def calculate_log_returns(self):
-        self.data["log_returns"] = np.log(self.data.close / self.data.close.shift(1))
+        self.data["log_returns"] = np.log(
+            self.data.close / self.data.close.shift(1)
+        )
 
     def plot_candles(self, fig_height=1000, notebook_handle=False):
         # Candle chart
-        candle_plot, volume_chart = create_candle_plot(self, fig_height=fig_height)
+        candle_plot, volume_chart = create_candle_plot(
+            self, fig_height=fig_height
+        )
         return show(
             gridplot([[candle_plot], [volume_chart]]),
             notebook_handle=notebook_handle,
@@ -92,7 +96,9 @@ class Crypto:
                 tools="xpan",
                 toolbar_location=None,
                 x_axis_type="datetime",
-                title="{}/{} | Returns".format(self.base_asset, self.quote_asset),
+                title="{}/{} | Returns".format(
+                    self.base_asset, self.quote_asset
+                ),
             )
             p.grid.grid_line_alpha = 0.3
             p.line("timestamp", "log_returns", line_color="navy", source=stock)
@@ -132,7 +138,9 @@ class Crypto:
             return self.data.log_returns.mean()
         else:
             resampled_price = self.data.close.resample(freq).last()
-            resampled_returns = np.log(resampled_price / resampled_price.shift(1))
+            resampled_returns = np.log(
+                resampled_price / resampled_price.shift(1)
+            )
             return resampled_returns.mean()
 
     def std_return(self, freq=None):
@@ -141,7 +149,9 @@ class Crypto:
             return self.data.log_returns.std()
         else:
             resampled_price = self.data.close.resample(freq).last()
-            resampled_returns = np.log(resampled_price / resampled_price.shift(1))
+            resampled_returns = np.log(
+                resampled_price / resampled_price.shift(1)
+            )
             return resampled_returns.std()
 
     def annualized_perf(self):

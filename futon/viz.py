@@ -3,9 +3,7 @@ from bokeh.models import HoverTool, CustomJS, Range1d
 from math import pi, inf
 
 
-def create_candle_plot(
-    asset, fig_width=1000, fig_height=600, colored=True
-):
+def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
     if colored:
         INCREASING_COLOR = "#4CAF50"
         DECREASING_COLOR = "#F44336"
@@ -21,7 +19,9 @@ def create_candle_plot(
         tools="xpan,xwheel_zoom,reset,save",
         active_drag="xpan",
         active_scroll="xwheel_zoom",
-        title="{}/{} | Candlestick plot".format(asset.base_asset, asset.quote_asset),
+        title="{}/{} | Candlestick plot".format(
+            asset.base_asset, asset.quote_asset
+        ),
         toolbar_location="above",
     )
 
@@ -133,7 +133,10 @@ def create_candle_plot(
     p.x_range.js_on_change("start", y_range_scaling_callback)
 
     x_range_callback = CustomJS(
-        args={"x_range": p.x_range, "interval": asset.provider.timeframe_seconds},
+        args={
+            "x_range": p.x_range,
+            "interval": asset.provider.timeframe_seconds,
+        },
         code="""            
         var latest_date = cb_obj.data["timestamp"][cb_obj.data["timestamp"].length - 1]
 

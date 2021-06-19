@@ -1,4 +1,4 @@
-from peepop.brokers import Local
+from futon.brokers import Local
 import unittest
 
 
