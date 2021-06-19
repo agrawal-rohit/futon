@@ -33,6 +33,7 @@ jobs:
           sudo make
           sudo make install
           pip install TA-Lib
+          export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
       - name: Install dependencies
         run: |
