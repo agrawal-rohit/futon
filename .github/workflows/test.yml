@@ -41,6 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install
+          pip install coverage
 
       - name: Lint with flake8
         run: |
