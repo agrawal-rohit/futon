@@ -34,10 +34,10 @@ class TradingStrategy:
     def setup(self):
         pass
 
-    def compute_indicators(self):
+    def compute_indicators(self, plot=True):
         # Compute values for all indicators
         for indicator in self.indicators:
-            indicator.compute(self.data)
+            indicator.compute(self.data, plot=plot)
 
     def update_indicators(self, plot=True):
         # Compute values for all indicators
@@ -53,7 +53,7 @@ class TradingStrategy:
         commision=0,
         verbose=False,
         plot_results=True,
-        show_trades=True,
+        show_trades=False,
     ):
         tracker = []
         account = Local(amount, commision=commision, verbose=verbose)
@@ -194,7 +194,7 @@ class TradingStrategy:
         p = bokeh.plotting.figure(
             x_axis_type="datetime",
             plot_width=1000,
-            plot_height=200,
+            plot_height=300,
             title=title,
             x_range=self.candle_plot.x_range,
         )
@@ -295,7 +295,7 @@ class TradingStrategy:
         self.trading_account = trading_account
 
         self.setup()
-        self.compute_indicators()
+        self.compute_indicators(plot=plot)
 
         if plot:
             candle_plot, volume_plot = create_candle_plot(
@@ -359,7 +359,7 @@ class TradingStrategy:
             )
             self.data = self.data.iloc[-1000:]
 
-            self.update_indicators(plot=False)
+            self.update_indicators(plot=plot)
 
             if plot:
                 push_notebook(handle=stream_plot)

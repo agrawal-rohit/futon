@@ -6,6 +6,14 @@ import random
 
 
 def get_color_list():
+    """
+    Returns a list of colors
+
+    Returns
+    -------
+    list
+        A list of colors
+    """
     return [
         "#F44336",
         "#E91E63",
@@ -30,23 +38,76 @@ def get_color_list():
 
 class Indicator:
     def __init__(self, plot=True, plot_separately=False, color=None):
+        """
+        Initialize common attributes for an indicator
+
+        Parameters
+        ----------
+        plot : bool, optional
+            Display the indicator during backtests/execution, by default True
+        plot_separately : bool, optional
+            Display the indicator in a separate plot than the candlestick, by default False
+        color : [type], optional
+            Color of the indicator plot, by default None. (If None, a random color is used)
+        """
         self.plot = plot
         self.plot_separately = plot_separately
         self.color = self.get_color(color)
 
     def get_color(self, color):
+        """
+        Finalize the color for the indicator
+
+        Parameters
+        ----------
+        color : str
+            Color of the indicator as provided by the user
+
+        Returns
+        -------
+        str
+            Final color of the indicator
+        """
+
+        # If user didn't provide a color
         if color is None:
             colors_list = get_color_list()
             return random.choice(colors_list)
+
+        # Return user defined color
         else:
             return color
 
     def preprocess_dataframe(self, data):
+        """
+        Helper function for converting pandas dataframe to dict so that TA-lib can process it
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            OHLCV price data about an instrument
+
+        Returns
+        -------
+        dict
+            HLOCV dict ingestable by TA-lib
+        """
         cols = ["high", "low", "open", "close", "volume"]
         HLOCV = {key: data[key].values for key in data if key in cols}
         return HLOCV
 
     def compute(self, data, plot=True):
+        """
+        Base function for computing values for an indicator based on it's compute logic
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            OHLCV price data about an instrument
+        plot : bool, optional
+            Explicit flag to display indicator, by default True
+        """
+
         processed_data = self.preprocess_dataframe(data)
         self.values = self.compute_function(processed_data)
 
@@ -59,6 +120,17 @@ class Indicator:
             )
 
     def update(self, updated_data, plot=True):
+        """
+        Incremenent indicator values in real-time
+
+        Parameters
+        ----------
+        updated_data : pandas.DataFrame
+            Latest OHLCV price data about an instrument
+        plot : bool, optional
+            Explicit flag to display indicator, by default True
+        """
+
         processed_data = self.preprocess_dataframe(updated_data)
         values = self.compute_function(processed_data)
 
@@ -75,6 +147,20 @@ class Indicator:
             self.cds.stream(new_value_source)
 
     def plot_indicator(self, plots):
+        """
+        Base method for plotting an indicator
+
+        Parameters
+        ----------
+        plots : list
+            A list of bokeh figures
+
+        Returns
+        -------
+        list
+            Updated list of bokeh figures (Adding plot to an existing figure or appending a new figure)
+        """
+
         if self.plot:
             if self.plot_separately:
                 p = bokeh.plotting.figure(
@@ -110,8 +196,6 @@ class Indicator:
 # ----------------------------------
 # OVERLAP INDICATORS
 # ----------------------------------
-
-
 class BollingerBands(Indicator):
     def __init__(self, color=None, plot=True, plot_separately=False, **kwargs):
         super().__init__(plot, plot_separately, color)
@@ -1401,8 +1485,10 @@ class TRIX(Indicator):
 
         # Plotting
         self.legend_label = "TRIX_{}".format(kwargs.get("timeperiod"))
-        self.title = "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA ({})".format(
-            kwargs.get("timeperiod")
+        self.title = (
+            "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA ({})".format(
+                kwargs.get("timeperiod")
+            )
         )
 
     def compute_function(self, processed_data):
