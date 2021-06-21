@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (21/06/2021)
+## 1.0.0 (21/06/2021)
 
 - Binance data provider added for fetching historical data for cryptocurrencies
 - Interactive OHLCV candlestick charts in Jupyter notebook
