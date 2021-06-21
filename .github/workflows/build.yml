@@ -74,7 +74,7 @@ jobs:
         run: poetry install --no-interaction
 
       #----------------------------------------------
-      # Compute build integrity
+      # Run unit tests and compute coverage
       #----------------------------------------------
       - name: Run tests and compute coverage
         run: |
