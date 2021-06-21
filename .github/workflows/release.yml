@@ -2,7 +2,7 @@ name: Release to PyPI
 
 on:
   release:
-    types: [published, created, released]
+    types: [published]
 
 jobs:
   test-build-publish:
