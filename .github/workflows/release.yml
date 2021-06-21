@@ -2,7 +2,7 @@ name: Release to PyPI
 
 on:
   release:
-    types: [published]
+    types: [published, edited, released]
 
 jobs:
   build-publish:
@@ -70,7 +70,7 @@ jobs:
       #----------------------------------------------
       - name: Build package
         run: poetry build
-        
+
       #----------------------------------------------
       # Publish to public PyPi
       #----------------------------------------------
