@@ -67,7 +67,7 @@ jobs:
       #----------------------------------------------
       # Run unit tests
       #----------------------------------------------
-      - name: Run tests and compute coverage
+      - name: Run unit tests
         run: |
           source .venv/bin/activate
           python -m unittest discover
