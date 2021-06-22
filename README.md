@@ -6,11 +6,13 @@
 <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/agrawal-rohit/futon/Build">
 <!-- <img alt="PyPI - Status" src="https://img.shields.io/pypi/status/futon"> -->
 <!-- <img alt="Codecov" src="https://img.shields.io/codecov/c/github/agrawal-rohit/futon"> -->
+<img alt="Codacy coverage" src="https://img.shields.io/codacy/coverage/9102daf9ad9546dbbec1cb26a339e0e5">
 <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/futon">
-<img alt="PyPI" src="https://img.shields.io/pypi/v/futon">
+<img alt="PyPI - Version" src="https://img.shields.io/pypi/v/futon">
 <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/futon">
-<img alt="CodeFactor Grade" src="https://img.shields.io/codefactor/grade/github/agrawal-rohit/futon">
-<img alt="GitHub" src="https://img.shields.io/github/license/agrawal-rohit/futon">
+<img alt="Codacy grade" src="https://img.shields.io/codacy/grade/9102daf9ad9546dbbec1cb26a339e0e5">
+<img alt="Licence" src="https://img.shields.io/github/license/agrawal-rohit/futon">
+<img alt="Contributions" src="https://img.shields.io/badge/contributions-welcome-orange">
 </p>
 
 # Installation
@@ -108,26 +110,24 @@ strat.backtest(start_date = '2021-06-1 00:00:00', commision = 0.001, show_trades
 
 **Output**
 
-```
-Performing backtest from: 01 June, 2021 (00:00:00) to 21 June, 2021 (16:00:00)
+    Performing backtest from: 01 June, 2021 (00:00:00) to 21 June, 2021 (16:00:00)
 
--------------- Results ----------------
+    -------------- Results ----------------
 
-Relative Returns: -2.55%
-Relative Profit: -25.49
+    Relative Returns: -2.55%
+    Relative Profit: -25.49
 
-Strategy     : -36.4%
-Net Profit   : -363.96
+    Strategy     : -36.4%
+    Net Profit   : -363.96
 
-Buy and Hold : -33.85%
-Net Profit   : -338.47
+    Buy and Hold : -33.85%
+    Net Profit   : -338.47
 
-Buys        : 75
-Sells        : 75
---------------------
-Total Trades : 150
+    Buys        : 75
+    Sells        : 75
+    --------------------
+    Total Trades : 150
 
----------------------------------------
-```
+    ---------------------------------------
 
 ![Backtest Plot](imgs/backtest.png)
