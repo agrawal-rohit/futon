@@ -118,7 +118,10 @@ class TradingStrategy:
             for indicator in self.indicators:
                 indicator.lookback = indicator.values[0 : index + 1]
 
-            self.logic(account, lookback)
+            try:
+                self.logic(account, lookback)
+            except Exception as e:
+                print("Error executing trading logic: ", e)
 
         # ------------------------------------------------------------
 

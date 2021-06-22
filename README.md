@@ -66,38 +66,39 @@ coin.plot_candles()
 from futon.strategy import TradingStrategy
 
 class MACDCrossover(TradingStrategy):
+
+    # Runs before the backtest has started
     def setup(self):
+        # Initialize the indicators you want to use here
         self.macd = futon.indicators.MACD(fastperiod = 6,
                                             slowperiod = 18,
                                             signalperiod = 5,
                                             plot_separately = True)
 
+        # 
         self.indicators = [self.macd]
 
+    # Live trading logic
     def logic(self, account, lookback):
-        try:
-            today = lookback.iloc[-1]
+        today = lookback.iloc[-1]
 
-            macd_today, signal_today, _ = self.macd.lookback[-1]
-            macd_yest, signal_yest, _ = self.macd.lookback[-2]
+        macd_today, signal_today, _ = self.macd.lookback[-1]
+        macd_yest, signal_yest, _ = self.macd.lookback[-2]
 
-            # Buying
-            buy_signal = (macd_today > signal_today) and (macd_yest < signal_yest)
-            if buy_signal:
-                entry_price   = today.close
-                entry_capital = account.buying_power
-                account.buy(entry_capital=entry_capital, entry_price=entry_price)
+        # Buying
+        buy_signal = (macd_today > signal_today) and (macd_yest < signal_yest)
+        if buy_signal:
+            entry_price   = today.close
+            entry_capital = account.buying_power
+            account.buy(entry_capital=entry_capital, entry_price=entry_price)
 
-            # Selling
-            sell_signal = (macd_today < signal_today) and (macd_yest > signal_yest)
+        # Selling
+        sell_signal = (macd_today < signal_today) and (macd_yest > signal_yest)
 
-            if sell_signal:
-                percent = 1
-                exit_price = today.close
-                account.sell(percent=percent, current_price=exit_price)
-
-        except Exception as e:
-            print('ERROR:', e)
+        if sell_signal:
+            percent = 1
+            exit_price = today.close
+            account.sell(percent=percent, current_price=exit_price)
 
 strat = MACDCrossover(coin)
 ```
