@@ -69,11 +69,37 @@ def timeframe_to_secs(timeframe):
 
 
 def datetime_to_timestamp(datetime):
+    """
+    Convert a datetime object to a UTC timestamp
+
+    Parameters
+    ----------
+    datetime : datetime
+        An instance of the datetime class
+
+    Returns
+    -------
+    int
+        An integer representing the UTC timestamp
+    """
     return (datetime - dt.datetime(1970, 1, 1)).total_seconds()
 
 
 def seconds_to_timeframe(seconds):
-    # Convert seconds to binance time intervals
+    """
+    Convert seconds to the appropriate string timeframe
+
+    Parameters
+    ----------
+    seconds : int
+        Seconds to convert
+
+    Returns
+    -------
+    str
+        A 'futon' timeframe
+    """
+    # Convert seconds to time intervals
     time_ints = ["min", "hour", "day", "week", "month"]
     interval_index = -1
     while True:
@@ -87,6 +113,14 @@ def seconds_to_timeframe(seconds):
 
 
 def validate_timeframe(timeframe):
+    """
+    Validate that a provided string timeframe is correct
+
+    Parameters
+    ----------
+    timeframe : str
+        A 'futon' timeframe
+    """
     timeframe_values = timeframe.split("-")
 
     if len(timeframe_values) != 2:
@@ -106,6 +140,24 @@ def validate_timeframe(timeframe):
 
 
 def preprocess_timeframe(timeframe, valid_timeframes):
+    """
+    Preprocess a provided timeframe based on a list of valid timeframes.
+
+    Valid timeframes vary across different data providers (Due to different APIs for every provider). Therefore, this function computes
+    an optimal timeframe (which provides the most data) closest the the given timeframe for a particular provider
+
+    Parameters
+    ----------
+    timeframe : str
+        A 'futon' timeframe
+    valid_timeframes : list of str
+        A list of 'futon' timeframes
+
+    Returns
+    -------
+    str
+        Optimal timeframe which provides the most data
+    """
     min_timeframe = valid_timeframes[0]
 
     # Find closest compatible timeframe
@@ -133,9 +185,51 @@ def preprocess_timeframe(timeframe, valid_timeframes):
     return optimal_timeframe, optimal_seconds
 
 
+def timeframe_to_binance_timeframe(timeframe):
+    """
+    Convert a futon timeframe to binance's timeframe format
+
+    Parameters
+    ----------
+    timeframe : str
+        A 'futon' timeframe
+
+    Returns
+    -------
+    str
+        A futon timeframe in binance format
+    """
+    timeframe_values = timeframe.split("-")
+    return timeframe_values[0] + timeframe_values[1][0]
+
+
 def minutes_of_new_data(
-    symbol, start_date, kline_size, data, source, client=None
+    symbol, start_date, timeframe, data, source, client=None
 ):
+    """
+    Computes the start and end dates for fetching historical data of an instrument
+
+    Parameters
+    ----------
+    symbol : str
+        Instrument pair symbol as given on the chosen data provider
+    start_date : str
+        The starting date from which to fetch the historical data, by default None. If None, the earliest recorded date on the provider is taken.
+        Acceptable format: 'year-month-day hour:minutes:seconds'
+    timeframe : str
+        A 'futon' timeframe
+    data : pandas.DataFrame
+        A pandas DataFrame which would store the new data
+    source : str
+        Name of the data provider
+    client : a class instance, optional
+        An API wrapper for a data provider, by default None
+
+    Returns
+    -------
+    tuple of datetime
+        A tuple of start and end dates between which new data is fetched. Both dates are represented as datetime objects.
+    """
     # Get start date for data feetching
     if len(data) > 0:
         start = data.index[-1]
@@ -148,14 +242,18 @@ def minutes_of_new_data(
 
     # Get end date for date fetching
     if source == "binance":
+        binance_timeframe = timeframe_to_binance_timeframe(timeframe)
         end = pd.to_datetime(
-            client.get_klines(symbol=symbol, interval=kline_size)[-1][0],
+            client.get_klines(symbol=symbol, interval=binance_timeframe)[-1][
+                0
+            ],
             unit="ms",
         )
     elif source == "coindcx":
+        binance_timeframe = timeframe_to_binance_timeframe(timeframe)
         response = requests.get(
             "https://public.coindcx.com/market_data/candles?pair={}&interval={}".format(
-                symbol, kline_size
+                symbol, binance_timeframe
             )
         )
         data = response.json()

@@ -67,7 +67,7 @@ from futon.strategy import TradingStrategy
 
 class MACDCrossover(TradingStrategy):
 
-    # Runs before the backtest has started
+    # Runs only once before trading has started
     def setup(self):
         # Initialize the indicators you want to use here
         self.macd = futon.indicators.MACD(fastperiod = 6,

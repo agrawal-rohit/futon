@@ -3,7 +3,30 @@ from bokeh.models import HoverTool, CustomJS, Range1d
 from math import pi, inf
 
 
-def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
+def create_candle_plot(
+    instrument, fig_width=1000, fig_height=600, colored=True
+):
+    """
+    Create an interactive OHLCV candlestick plot for an instrument
+
+    Parameters
+    ----------
+    instrument : futon.instruments.Instrument
+        An instance of the futon Instrument class
+    fig_width : int, optional
+        Width of the plot, by default 1000
+    fig_height : int, optional
+        Height of the plot, by default 600
+    colored : bool, optional
+        Flag to display the candles with colors, by default True.
+        If True, the increasing candles are displayed as green and decreasing candles are displayed as red.
+        If False, all candles are displayed as grey.
+
+    Returns
+    -------
+    tuple of bokeh.figure
+        A tuple of candlestick and volume plots respectively
+    """
     if colored:
         INCREASING_COLOR = "#4CAF50"
         DECREASING_COLOR = "#F44336"
@@ -20,7 +43,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
         active_drag="xpan",
         active_scroll="xwheel_zoom",
         title="{}/{} | Candlestick plot".format(
-            asset.base_asset, asset.quote_asset
+            instrument.base_asset, instrument.quote_asset
         ),
         toolbar_location="above",
     )
@@ -29,15 +52,15 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
     p.grid.grid_line_alpha = 0.3
     p.x_range.follow = "end"
     p.x_range.range_padding = 0
-    x_start = asset._data_source_increasing.data["timestamp"][-50]
-    x_end = asset._data_source_increasing.data["timestamp"][-1]
+    x_start = instrument._data_source_increasing.data["timestamp"][-50]
+    x_end = instrument._data_source_increasing.data["timestamp"][-1]
     p.x_range = Range1d(x_start, x_end)
 
     y_min = inf
     y_max = -inf
-    dates = asset.scaling_source.data["timestamp"]
-    lows = asset.scaling_source.data["low"]
-    highs = asset.scaling_source.data["high"]
+    dates = instrument.scaling_source.data["timestamp"]
+    lows = instrument.scaling_source.data["low"]
+    highs = instrument.scaling_source.data["high"]
     for i in range(0, len(dates)):
         if x_start <= dates[i] and dates[i] <= x_end:
             y_max = max(highs[i], y_max)
@@ -48,14 +71,16 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
     final_y_min = y_min - pad
     p.y_range = Range1d(final_y_min, final_y_max)
 
-    bar_width = asset.provider.timeframe_seconds * 1000 * 0.6  # seconds in ms
+    bar_width = (
+        instrument.provider.timeframe_seconds * 1000 * 0.6
+    )  # seconds in ms
 
     p.segment(
         x0="timestamp",
         y0="high",
         x1="timestamp",
         y1="low",
-        source=asset._data_source_increasing,
+        source=instrument._data_source_increasing,
         color=INCREASING_COLOR,
     )
     p.segment(
@@ -63,7 +88,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
         y0="high",
         x1="timestamp",
         y1="low",
-        source=asset._data_source_decreasing,
+        source=instrument._data_source_decreasing,
         color=DECREASING_COLOR,
     )
 
@@ -74,7 +99,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
         bottom="close",
         fill_color=INCREASING_COLOR,
         line_color=INCREASING_COLOR,
-        source=asset._data_source_increasing,
+        source=instrument._data_source_increasing,
         name="price",
     )
     dec_bar = p.vbar(
@@ -84,7 +109,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
         bottom="close",
         fill_color=DECREASING_COLOR,
         line_color=DECREASING_COLOR,
-        source=asset._data_source_decreasing,
+        source=instrument._data_source_decreasing,
         name="price",
     )
 
@@ -103,7 +128,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
 
     # Kline plot callbacks
     y_range_scaling_callback = CustomJS(
-        args={"y_range": p.y_range, "source": asset.scaling_source},
+        args={"y_range": p.y_range, "source": instrument.scaling_source},
         code="""
         clearTimeout(window._autoscale_timeout);
         
@@ -135,7 +160,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
     x_range_callback = CustomJS(
         args={
             "x_range": p.x_range,
-            "interval": asset.provider.timeframe_seconds,
+            "interval": instrument.provider.timeframe_seconds,
         },
         code="""            
         var latest_date = cb_obj.data["timestamp"][cb_obj.data["timestamp"].length - 1]
@@ -150,7 +175,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
     """,
     )
 
-    asset.scaling_source.js_on_change("streaming", x_range_callback)
+    instrument.scaling_source.js_on_change("streaming", x_range_callback)
 
     # Volume bar plot
     p2 = figure(
@@ -169,7 +194,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
         width=bar_width,
         top="volume",
         color=INCREASING_COLOR,
-        source=asset._data_source_increasing,
+        source=instrument._data_source_increasing,
         alpha=0.5,
     )
     p2.vbar(
@@ -177,7 +202,7 @@ def create_candle_plot(asset, fig_width=1000, fig_height=600, colored=True):
         width=bar_width,
         top="volume",
         color=DECREASING_COLOR,
-        source=asset._data_source_decreasing,
+        source=instrument._data_source_decreasing,
         alpha=0.5,
     )
 

@@ -6,7 +6,61 @@ from bokeh.layouts import gridplot
 from bokeh.io import show
 
 
-class Crypto:
+class Instrument:
+    """
+    Base class for all instruments
+    """
+
+    def __init__(self) -> None:
+        pass
+
+
+class Crypto(Instrument):
+    """
+    A class for defining cryptocurrency instruments
+
+    Attributes
+    ----------
+    base_asset : str
+        Name of the asset to trade. For instance, base asset in 'BTC/USDT' would be BTC
+    quote_asset : str
+        Name of the asset to trade with. For instance, quote asset in 'BTC/USDT' would be USDT
+    provider : futon.providers.Provider
+        The data source for historical and real-time data. Supported providers - Binance (more to be added soon)
+    start_date : str, optional
+        The starting date from which to fetch the historical data, by default None. If None, the earliest recorded date on the provider is taken.
+        Acceptable format: 'year-month-day hour:minutes:seconds'
+    interval : str, optional
+        The timeframe to fetch the OHLCV candles for, by default "5-min". This is referred as a 'futon' timeframe.
+        Acceptable format: '[freq]-[unit]'
+    save_data : bool, optional
+        Whether to store the data as a local CSV file, by default True.
+        (It is advised to keep this value as True to prevent fetching the entire data again on every run)
+
+    Methods
+    -------
+    fetch_historical_data(save_data=True):
+        Fetches the historical OHLCV candle data from the given data provider
+
+    calculate_log_returns():
+        Calculates log returns for the instrument
+
+    plot_candles(fig_height=500, notebook_handle=False):
+        Create an interactive OHLCV candle plot for the historical data of the instrument
+
+    plot_returns(kind="ts"):
+        Plot log returns of the instrument.
+
+    mean_return(freq=None):
+        Calculate mean returns aggregated on the given time frequency
+
+    std_return(freq=None):
+        Calculate mean standard deviation aggregated on the given time frequency
+
+    annualized_perf():
+        Displays average annual risk/return for the current instrument
+    """
+
     def __init__(
         self,
         base_asset,
@@ -14,6 +68,7 @@ class Crypto:
         provider,
         start_date=None,
         interval="5-min",
+        save_data=True,
     ):
         """
         Initializes details about the cryptocurrency the given data provider, validates the given instrument configuration,
@@ -28,9 +83,14 @@ class Crypto:
         provider : futon.providers.Provider
             The data source for historical and real-time data. Supported providers - Binance (more to be added soon)
         start_date : str, optional
-            The starting date from which to fetch the historical data, by default None. If None, the earliest recorded date on the provider is taken. Acceptable format: 'year-month-day hour:minutes:seconds'
+            The starting date from which to fetch the historical data, by default None. If None, the earliest recorded date on the provider is taken.
+            Acceptable format: 'year-month-day hour:minutes:seconds'
         interval : str, optional
-            The timeframe to fetch the OHLCV candles for, by default "5-min"
+            The timeframe to fetch the OHLCV candles for, by default "5-min". This is referred as a 'futon' timeframe.
+            Acceptable format: '[freq]-[unit]'
+        save_data : bool, optional
+            Whether to store the data as a local CSV file, by default True.
+            (It is advised to keep this value as True to prevent fetching the entire data again on every run)
         """
 
         self.base_asset = base_asset.upper()
@@ -42,18 +102,26 @@ class Crypto:
 
         # Data
         self.start_date = start_date
-        self.fetch_historical_data()
+        self.fetch_historical_data(save_data=save_data)
 
     def __repr__(self):
         return "Crypto(base_asset={}, quote_asset={})".format(
             self.base_asset, self.quote_asset
         )
 
-    def fetch_historical_data(self):
+    def fetch_historical_data(self, save_data=True):
         """
         Fetches the historical OHLCV candle data from the given data provider
+
+        Parameters
+        ----------
+        save_data : bool, optional
+            Whether to store the data as a local CSV file, by default True.
+            (It is advised to keep this value as True to prevent fetching the entire data again on every run)
         """
-        self.data = self.provider.fetch_historical_klines(self.start_date)
+        self.data = self.provider.fetch_historical_klines(
+            self.start_date, save=save_data
+        )
 
         inc = self.data.close > self.data.open
         dec = ~inc

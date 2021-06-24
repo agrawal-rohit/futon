@@ -61,9 +61,46 @@ class long_position(position):
 
 
 class Local:
-    """An object representing an exchange account."""
+    """
+    A class which emulates a broker account with paper money
+
+    Attributes
+    ----------
+    initial_capital : int
+        Starting balance in the account
+    commision : int, optional
+        Commission charged during trades, by default 0
+    verbose : bool, optional
+        Whether to show details of trades during simulation, by default False
+
+    Methods
+    -------
+    buy(entry_capital, entry_price, stop_loss=0):
+        Create a buy order
+
+    sell(percent, current_price, stop_loss=math.inf):
+        Create a sell order
+
+    show_positions():
+        Show all account positions
+
+    total_value(current_price):
+        Calculate the total net asset value of the broker account
+    """
 
     def __init__(self, initial_capital, commision=0, verbose=False):
+        """
+        Initialize the broker account with the desired starting capital and other configuration
+
+        Parameters
+        ----------
+        initial_capital : int
+            Starting balance in the account
+        commision : int, optional
+            Commission charged during trades, by default 0
+        verbose : bool, optional
+            Whether to show details of trades during simulation, by default False
+        """
         self.initial_capital = float(initial_capital)
         self.buying_power = float(initial_capital)
 
@@ -78,6 +115,18 @@ class Local:
         self.trades = []
 
     def buy(self, entry_capital, entry_price, stop_loss=0):
+        """
+        Create a buy order
+
+        Parameters
+        ----------
+        entry_capital : float or int
+            Amount of capital to use to buy shares
+        entry_price : float or int
+            Price of the instrument at which to buy shares
+        stop_loss : float or int, optional
+            Price at which to exit the position, by default 0
+        """
         entry_capital = float(entry_capital)
 
         if entry_capital <= 0:
@@ -118,12 +167,23 @@ class Local:
             )
 
     def sell(self, percent, current_price, stop_loss=math.inf):
+        """
+        Create a sell order
+
+        Parameters
+        ----------
+        percent : float or int
+            Percent of owned shares to sell
+        current_price : float or int
+            Price of the instrument at which to sell shares
+        stop_loss : float or int, optional
+            Price at which to exit the position, by default math.inf
+        """
         if percent > 1 or percent < 0:
             raise ValueError("Error: Percent must range between 0-1.")
         elif current_price < 0:
             raise ValueError("Error: Current price cannot be negative.")
         else:
-
             if self.active_position is not None:
                 quantity = self.active_position.shares * percent
                 self.trades.append(
@@ -167,11 +227,24 @@ class Local:
                 raise ValueError("No active position! Cannot sell yet.")
 
     def show_positions(self):
-        """Show all account positions."""
+        """Show all account positions"""
         for p in self.positions:
             p.show()
 
     def total_value(self, current_price):
+        """
+        Calculate the total net asset value of the broker account
+
+        Parameters
+        ----------
+        current_price : float or int
+            Latest price of the instrument
+
+        Returns
+        -------
+        float or int
+            Net asset value of the broker account
+        """
         temporary = copy.deepcopy(self)
         temporary.verbose = False
         if temporary.active_position:

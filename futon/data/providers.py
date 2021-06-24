@@ -4,6 +4,7 @@ from .helpers import (
     datetime_to_timestamp,
     seconds_to_timeframe,
     validate_timeframe,
+    timeframe_to_binance_timeframe,
     preprocess_timeframe,
     resample_data,
     timeframe_to_secs,
@@ -20,6 +21,10 @@ import threading
 
 
 class Provider:
+    """
+    Base class for a data provider
+    """
+
     def __init__(self, api_key, api_secret):
         self.api_key = api_key
         self.api_secret = api_secret
@@ -27,6 +32,16 @@ class Provider:
 
 class Binance(Provider):
     def __init__(self, api_key, api_secret):
+        """
+        Initialize the binance data provider by setting the correct credentials
+
+        Parameters
+        ----------
+        api_key : str
+            A binance API key (Create one here: https://www.binance.com/en-IN/my/settings/api-management)
+        api_secret : str
+            A binance API secret (Create one here: https://www.binance.com/en-IN/my/settings/api-management)
+        """
         super().__init__(api_key, api_secret)
         self.client = Client(api_key=api_key, api_secret=api_secret)
         self.twm = ThreadedWebsocketManager(
@@ -35,17 +50,35 @@ class Binance(Provider):
         self.twm.start()
 
     def validate_asset_config(self, base_asset, quote_asset, timeframe):
+        """
+        Validate that a given instrument pair exists on the Binance exchange
+
+        Parameters
+        ----------
+        base_asset : str
+            Name of the asset to trade. For instance, base asset in 'BTC/USDT' would be BTC
+        quote_asset : str
+            Name of the asset to trade with. For instance, quote asset in 'BTC/USDT' would be USDT
+        timeframe : str
+            A 'futon' timeframe
+        """
         self.fetch_valid_symbol(base_asset, quote_asset)
 
         self.timeframe = timeframe
         validate_timeframe(timeframe)
         self.timeframe_seconds = timeframe_to_secs(timeframe)
 
-    def timeframe_to_provider_timeframe(self, timeframe):
-        timeframe_values = timeframe.split("-")
-        return timeframe_values[0] + timeframe_values[1][0]
-
     def fetch_valid_symbol(self, base_asset, quote_asset):
+        """
+        Fetch the symbol for an instrument pair as stored on the Binance exchange
+
+        Parameters
+        ----------
+        base_asset : str
+            Name of the asset to trade. For instance, base asset in 'BTC/USDT' would be BTC
+        quote_asset : str
+            Name of the asset to trade with. For instance, quote asset in 'BTC/USDT' would be USDT
+        """
         data = self.client.get_exchange_info()
 
         for symbol in data["symbols"]:
@@ -63,6 +96,23 @@ class Binance(Provider):
         )
 
     def fetch_historical_klines(self, start_date, save=True):
+        """
+        Fetch the historical data from the Binance API for the current instrument pair
+
+        Parameters
+        ----------
+        start_date : str, optional
+            The starting date from which to fetch the historical data, by default None. If None, the earliest recorded date on the provider is taken.
+            Acceptable format: 'year-month-day hour:minutes:seconds'
+        save : bool, optional
+            Whether to store the data as a local CSV file, by default True.
+            (It is advised to keep this value as True to prevent fetching the entire data again on every run)
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas.DataFrame containing the historical data in an OHLCV format
+        """
         # Preprocess timeframe
         timeframe, timeframe_seconds = preprocess_timeframe(
             self.timeframe,
@@ -84,8 +134,9 @@ class Binance(Provider):
                 "1-month",
             ],
         )
-        binance_timeframe = self.timeframe_to_provider_timeframe(timeframe)
+        binance_timeframe = timeframe_to_binance_timeframe(timeframe)
 
+        # Check for already existing hitorical data
         filename = "%s-%s-data.csv" % (self.symbol, binance_timeframe)
         if os.path.isfile(filename):
             data_df = pd.read_csv(
@@ -94,10 +145,11 @@ class Binance(Provider):
         else:
             data_df = pd.DataFrame()
 
+        # Fetch the latest data
         oldest_point, newest_point = minutes_of_new_data(
             self.symbol,
             start_date,
-            binance_timeframe,
+            timeframe,
             data_df,
             source="binance",
             client=self.client,
@@ -197,7 +249,28 @@ class Binance(Provider):
     #     return self.twm.start_kline_socket(callback=handle_socket_message, symbol=self.symbol, interval = binance_timeframe)
 
     def stream_klines(self, asset, new_candle_callback):
+        """
+        Start a websocket connection and stream OHLCV candle data from the Binance exchange in real-time
+
+        Parameters
+        ----------
+        asset : futon.instruments.Instrument
+            An instance of the futon Instrument class
+        new_candle_callback : function
+            The callback function to call when a candle has closed
+        """
+
         def handle_socket_message(ws, msg):
+            """
+            Callback function whenever a new tick is received from the websocket
+
+            Parameters
+            ----------
+            ws : websocket instance
+                Instance of the websocket
+            msg : str
+                A stringified json object containing the message sent along the tick
+            """
             # If first candle or new candle received
             msg = json.loads(msg)
 

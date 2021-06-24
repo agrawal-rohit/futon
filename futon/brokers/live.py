@@ -9,17 +9,51 @@ import datetime as dt
 
 # Helpers
 def truncate(number, digits):
+    """
+    Helper function to truncate a float to a precise number of digits after the decimal point
+
+    Parameters
+    ----------
+    number : float
+        The number to truncate
+    digits : int
+        Number of digits to keep after the decimal point
+
+    Returns
+    -------
+    float
+        Truncated number
+    """
     stepper = 10.0 ** digits
     return math.trunc(stepper * number) / stepper
 
 
-class CoinDCX:
-    def __init__(self, asset, api_key, api_secret):
+class Broker:
+    """Base class for a broker account"""
+
+    def __init__(self) -> None:
+        pass
+
+
+class CoinDCX(Broker):
+    def __init__(self, instrument, api_key, api_secret):
+        """
+        Initialize a CoinDCX broker account with the target instrument and API credentials
+
+        Parameters
+        ----------
+        instrument : futon.instruments.Instrument
+            An instance of the futon Instrument class
+        api_key : str
+            CoinDCX API key
+        api_secret : str
+            CoinDCX API secret
+        """
         self.api_key = api_key
         self.api_secret = api_secret
 
-        self.base_asset = asset.base_asset
-        self.quote_asset = asset.quote_asset
+        self.base_asset = instrument.base_asset
+        self.quote_asset = instrument.quote_asset
         self.fetch_valid_symbol()
 
         # Fetch shares and balances
@@ -43,6 +77,8 @@ class CoinDCX:
         return response.json()
 
     def fetch_valid_symbol(self):
+        """Fetch the symbol for an instrument pair as stored on the CoinDCX exchange"""
+
         response = requests.get(
             "https://api.coindcx.com/exchange/v1/markets_details"
         )
@@ -64,6 +100,7 @@ class CoinDCX:
         )
 
     def update_shares_and_balances(self):
+        """Update the owned shares and buying capital available in the account"""
         body = {"timestamp": int(round(time.time() * 1000))}
         data = self.make_request(
             "https://api.coindcx.com/exchange/v1/users/balances", body
@@ -76,7 +113,19 @@ class CoinDCX:
             if balance["currency"] == self.quote_asset:
                 self.buying_power = float(balance["balance"])
 
-    def buy(self, entry_capital, entry_price, stop_loss=0):
+    def buy(self, entry_capital, entry_price):
+        """
+        Create a buy order
+
+        Parameters
+        ----------
+        entry_capital : float or int
+            Amount of capital to use to buy shares
+        entry_price : float or int
+            Price of the instrument at which to buy shares, by default None.
+        stop_loss : float or int, optional
+            Price at which to exit the position, by default 0
+        """
         entry_capital = float(entry_capital)
 
         if entry_capital < 0:
@@ -91,22 +140,22 @@ class CoinDCX:
             quantity = truncate(entry_capital / (entry_price), 1)
             current_timestamp = time.time()
 
-            # body = {
-            #     "side": "buy",
-            #     "order_type": "limit_order",
-            #     "price_per_unit": entry_price,
-            #     "market": self.symbol,
-            #     "total_quantity": quantity,
-            #     "timestamp": int(round(current_timestamp * 1000))
-            # }
-
             body = {
                 "side": "buy",
-                "order_type": "market_order",
+                "order_type": "limit_order",
+                "price_per_unit": entry_price,
                 "market": self.symbol,
                 "total_quantity": quantity,
                 "timestamp": int(round(current_timestamp * 1000)),
             }
+
+            # body = {
+            #     "side": "buy",
+            #     "order_type": "market_order",
+            #     "market": self.symbol,
+            #     "total_quantity": quantity,
+            #     "timestamp": int(round(current_timestamp * 1000)),
+            # }
 
             data = self.make_request(
                 "https://api.coindcx.com/exchange/v1/orders/create", body
@@ -130,7 +179,17 @@ class CoinDCX:
 
             self.orders = data
 
-    def sell(self, percent, current_price, stop_loss=math.inf):
+    def sell(self, percent, current_price):
+        """
+        Create a sell order
+
+        Parameters
+        ----------
+        percent : float or int
+            Percent of owned shares to sell
+        current_price : float or int
+            Price of the instrument at which to sell shares
+        """
         if percent > 1 or percent < 0:
             raise ValueError("Error: Percent must range between 0-1.")
         elif current_price < 0:
@@ -139,22 +198,22 @@ class CoinDCX:
             quantity = truncate(self.shares * percent, 1)
             current_timestamp = time.time()
 
-            # body = {
-            #     "side": "sell",
-            #     "order_type": "limit_order",
-            #     "price_per_unit": current_price,
-            #     "market": self.symbol,
-            #     "total_quantity": quantity,
-            #     "timestamp": int(round(current_timestamp * 1000))
-            # }
-
             body = {
                 "side": "sell",
-                "order_type": "market_order",
+                "order_type": "limit_order",
+                "price_per_unit": current_price,
                 "market": self.symbol,
                 "total_quantity": quantity,
                 "timestamp": int(round(current_timestamp * 1000)),
             }
+
+            # body = {
+            #     "side": "sell",
+            #     "order_type": "market_order",
+            #     "market": self.symbol,
+            #     "total_quantity": quantity,
+            #     "timestamp": int(round(current_timestamp * 1000)),
+            # }
 
             data = self.make_request(
                 "https://api.coindcx.com/exchange/v1/orders/create", body
