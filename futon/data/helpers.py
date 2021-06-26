@@ -12,10 +12,8 @@ def resample_data(df, timeframe):
     ----------
     df : pandas.DataFrame
         An HLOCV pandas dataframe with a datetime index
-    integer : int
-        The frequency of the higher timeframe
-    htf : str
-        The period of the higher timeframe (e.g. 'MIN', 'HOUR', 'DAY', 'WEEK', "MONTH")
+    timeframe : str
+        A 'futon' timeframe
 
     Returns
     -------
@@ -35,81 +33,6 @@ def resample_data(df, timeframe):
     df["volume"] = df.volume.resample(new_timeframe).sum()
 
     return df.dropna()
-
-
-def timeframe_to_secs(timeframe):
-    """Convert a timeframe into its equivalent in seconds.
-
-    Parameters
-    ----------
-    freq : int
-        The frequency of the timeframe
-    unit : str
-        The period of the timeframe (e.g. 'MIN', 'HOUR', 'DAY', 'WEEK', "MONTH")
-
-    Returns
-    -------
-    int
-        A timeframe represented as seconds
-    """
-
-    timeframe_values = timeframe.split("-")
-    tf_freq = int(timeframe_values[0])
-    tf_size = str(timeframe_values[1])
-
-    multiplier = {
-        "min": 60,
-        "hour": 3600,
-        "day": 86400,
-        "week": 604800,
-        "month": 18144000,
-    }
-
-    return tf_freq * multiplier[tf_size]
-
-
-def datetime_to_timestamp(datetime):
-    """
-    Convert a datetime object to a UTC timestamp
-
-    Parameters
-    ----------
-    datetime : datetime
-        An instance of the datetime class
-
-    Returns
-    -------
-    int
-        An integer representing the UTC timestamp
-    """
-    return (datetime - dt.datetime(1970, 1, 1)).total_seconds()
-
-
-def seconds_to_timeframe(seconds):
-    """
-    Convert seconds to the appropriate string timeframe
-
-    Parameters
-    ----------
-    seconds : int
-        Seconds to convert
-
-    Returns
-    -------
-    str
-        A 'futon' timeframe
-    """
-    # Convert seconds to time intervals
-    time_ints = ["min", "hour", "day", "week", "month"]
-    interval_index = -1
-    while True:
-        if seconds < 60:
-            break
-
-        seconds = int(seconds / 60)
-        interval_index += 1
-
-    return "{}-{}".format(seconds, time_ints[interval_index])
 
 
 def validate_timeframe(timeframe):
@@ -137,6 +60,94 @@ def validate_timeframe(timeframe):
             raise ValueError(
                 "{0} is an invalid unit of time...".format(tf_size)
             )
+
+
+def timeframe_to_secs(timeframe):
+    """Convert a timeframe into its equivalent in seconds.
+
+    Parameters
+    ----------
+    freq : int
+        The frequency of the timeframe
+    unit : str
+        The period of the timeframe (e.g. 'MIN', 'HOUR', 'DAY', 'WEEK', "MONTH")
+
+    Returns
+    -------
+    int
+        A timeframe represented as seconds
+    """
+
+    timeframe_values = timeframe.split("-")
+
+    validate_timeframe(timeframe)
+
+    tf_freq = int(timeframe_values[0])
+    tf_size = str(timeframe_values[1])
+
+    multiplier = {
+        "min": 60,
+        "hour": 3600,
+        "day": 86400,
+        "week": 604800,
+        "month": 2592000,
+    }
+
+    return tf_freq * multiplier[tf_size]
+
+
+def datetime_to_timestamp(datetime):
+    """
+    Convert a datetime object to a UTC timestamp
+
+    Parameters
+    ----------
+    datetime : datetime
+        An instance of the datetime class
+
+    Returns
+    -------
+    int
+        An integer representing the UTC timestamp
+    """
+    return int((datetime - dt.datetime(1970, 1, 1)).total_seconds())
+
+
+def seconds_to_timeframe(seconds):
+    """
+    Convert seconds to the appropriate string timeframe
+
+    Parameters
+    ----------
+    seconds : int
+        Seconds to convert
+
+    Returns
+    -------
+    str
+        A 'futon' timeframe
+    """
+    # Convert seconds to time intervals
+    time_ints = ["sec", "min", "hour", "day", "week", "month"]
+    relative_time_diffs = {
+        "sec": 1,
+        "min": 60,
+        "hour": 60,
+        "day": 24,
+        "week": 7,
+        "month": 4,
+    }
+    interval_index = -1
+    while True:
+        if (interval_index == len(time_ints) - 1) or (
+            seconds < relative_time_diffs[time_ints[interval_index + 1]]
+        ):
+            break
+
+        interval_index += 1
+        seconds = seconds // relative_time_diffs[time_ints[interval_index]]
+
+    return "{}-{}".format(seconds, time_ints[interval_index])
 
 
 def preprocess_timeframe(timeframe, valid_timeframes):

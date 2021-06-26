@@ -91,17 +91,3 @@ jobs:
           project-token: ${{ secrets.CODACY_API_TOKEN }}
           # Optional comma separated list of coverage reports to send to Codacy
           coverage-reports: coverage.xml
-
-      #----------------------------------------------
-      # Build documentation
-      #----------------------------------------------
-      - name: Install Sphinx Theme and build docs
-        run: |
-          pip install sphinx-press-theme
-          cd docs && make html
-
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.API_TOKEN_GITHUB }}
-          publish_dir: ./docs/_build/html
