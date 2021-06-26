@@ -101,5 +101,5 @@ jobs:
 
       - uses: seanzhengw/sphinx-pages@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.API_TOKEN_GITHUB }}
           create_readme: true
