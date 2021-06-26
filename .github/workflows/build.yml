@@ -95,11 +95,13 @@ jobs:
       #----------------------------------------------
       # Build documentation
       #----------------------------------------------
-      - name: Install Sphinx Theme
+      - name: Install Sphinx Theme and build docs
         run: |
           pip install sphinx-press-theme
+          cd docs && make html
 
-      - uses: seanzhengw/sphinx-pages@master
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.API_TOKEN_GITHUB }}
-          create_readme: true
+          publish_dir: ./docs/_build/html
