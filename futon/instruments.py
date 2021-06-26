@@ -1,6 +1,6 @@
 import numpy as np
 from .viz import create_candle_plot
-
+import pandas as pd
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.layouts import gridplot
 from bokeh.io import show
@@ -25,7 +25,9 @@ class Crypto(Instrument):
         Name of the asset to trade. For instance, base asset in 'BTC/USDT' would be BTC
     quote_asset : str
         Name of the asset to trade with. For instance, quote asset in 'BTC/USDT' would be USDT
-    provider : futon.providers.Provider
+    data_df : pd.DataFrame, optional
+            Price data for the instrument in an OHLCV+ format. If a valid dataframe is provided, it overrides fetching of data from the an external data provider.
+    provider : futon.providers.Provider, optional
         The data source for historical and real-time data. Supported providers - Binance (more to be added soon)
     start_date : str, optional
         The starting date from which to fetch the historical data, by default None. If None, the earliest recorded date on the provider is taken.
@@ -65,7 +67,8 @@ class Crypto(Instrument):
         self,
         base_asset,
         quote_asset,
-        provider,
+        data_df=None,
+        provider=None,
         start_date=None,
         interval="5-min",
         save_data=True,
@@ -80,7 +83,9 @@ class Crypto(Instrument):
             Name of the asset to trade. For instance, base asset in 'BTC/USDT' would be BTC
         quote_asset : str
             Name of the asset to trade with. For instance, quote asset in 'BTC/USDT' would be USDT
-        provider : futon.providers.Provider
+        data_df : pd.DataFrame, optional
+            Price data for the instrument in an OHLCV+ format. If a valid dataframe is provided, it overrides fetching of data from the an external data provider.
+        provider : futon.providers.Provider, optional
             The data source for historical and real-time data. Supported providers - Binance (more to be added soon)
         start_date : str, optional
             The starting date from which to fetch the historical data, by default None. If None, the earliest recorded date on the provider is taken.
@@ -96,13 +101,33 @@ class Crypto(Instrument):
         self.base_asset = base_asset.upper()
         self.quote_asset = quote_asset.upper()
 
-        # Provider initialize
-        self.provider = provider
-        self.provider.validate_asset_config(base_asset, quote_asset, interval)
+        if data_df is not None:
+            # Load custom data
+            if not isinstance(data_df, pd.DataFrame):
+                raise ValueError("Data must be a pandas dataframe")
 
-        # Data
-        self.start_date = start_date
-        self.fetch_historical_data(save_data=save_data)
+            missing = set(["high", "low", "open", "close", "volume"]) - set(
+                data_df.columns
+            )
+            if len(missing) > 0:
+                msg = "Missing {0} column(s), dataframe must be HLOCV+".format(
+                    list(missing)
+                )
+                raise ValueError(msg)
+
+            self.data = data_df
+            self._post_process_data()
+
+        else:
+            # Provider initialization
+            self.provider = provider
+            self.provider.validate_asset_config(
+                base_asset, quote_asset, interval
+            )
+
+            # Data
+            self.start_date = start_date
+            self.fetch_historical_data(save_data=save_data)
 
     def __repr__(self):
         return "Crypto(base_asset={}, quote_asset={})".format(
@@ -123,6 +148,11 @@ class Crypto(Instrument):
             self.start_date, save=save_data
         )
 
+        self._post_process_data()
+        # Calculate log returns
+        self.calculate_log_returns()
+
+    def _post_process_data(self):
         inc = self.data.close > self.data.open
         dec = ~inc
 
@@ -154,9 +184,6 @@ class Crypto(Instrument):
                 low=self.data.low.values,
             )
         )
-
-        # Calculate log returns
-        self.calculate_log_returns()
 
     def calculate_log_returns(self):
         """
