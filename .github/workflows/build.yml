@@ -34,9 +34,9 @@ jobs:
           virtualenvs-in-project: true
 
       #----------------------------------------------
-      # Install Technical Analysis library
+      # Install Technical Analysis library and sphinx theme
       #----------------------------------------------
-      - name: Install TA-lib
+      - name: Install TA-lib and Sphinx Theme
         run: |
           sudo apt-get -y install gcc build-essential
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz \
@@ -49,6 +49,7 @@ jobs:
             && cd ~ \
             && sudo rm -rf ta-lib/ \
             && pip install ta-lib
+            && pip install sphinx-press-theme
 
       #----------------------------------------------
       #       load cached venv if cache exists
