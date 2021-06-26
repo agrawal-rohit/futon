@@ -55,6 +55,7 @@ binance = "0.3"
 Requests = "2.25.1"
 tqdm = "4.61.1"
 websocket_client = "1.1.0"
+sphinx-press-theme = "^0.7.3"
 
 [tool.poetry.dev-dependencies]
 coverage = "*"
@@ -62,3 +63,4 @@ flake8 = "*"
 pipenv-to-requirements = "*"
 pre-commit = "*"
 black = "*"
+Sphinx = "^4.0.2"
