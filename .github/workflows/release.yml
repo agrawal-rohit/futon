@@ -95,7 +95,7 @@ jobs:
           pip install sphinx-press-theme
           cd docs && make html
 
-      - name: Deploy
+      - name: Upload Docs to Github Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.API_TOKEN_GITHUB }}

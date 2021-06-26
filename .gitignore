@@ -130,4 +130,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*.csv
+# CSV data files in examples
+examples/*.csv
