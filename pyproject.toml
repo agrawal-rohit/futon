@@ -22,9 +22,9 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules"
@@ -53,7 +53,7 @@ exclude = '''
 '''
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 python_binance = "1.0.10"
 bokeh = "2.3.2"
 TA_Lib = "0.4.20"
