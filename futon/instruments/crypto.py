@@ -1,18 +1,10 @@
 import numpy as np
-from .viz import create_candle_plot
+from ..viz import create_candle_plot
+from . import Instrument
 import pandas as pd
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.layouts import gridplot
 from bokeh.io import show
-
-
-class Instrument:
-    """
-    Base class for all instruments
-    """
-
-    def __init__(self) -> None:
-        pass
 
 
 class Crypto(Instrument):
@@ -226,7 +218,7 @@ class Crypto(Instrument):
         Parameters
         ----------
         kind : str, optional
-            Kind of plot to display. Acceptable values - 'ts' (Timeseries), 'hs' (Histogram), by default "ts"
+            Kind of plot to display. Acceptable values - 'ts' (Timeseries), 'hs' (Histogram). Default value is "ts"
         """
         stock = ColumnDataSource(
             data=dict(open=[], close=[], high=[], low=[], index=[])

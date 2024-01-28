@@ -132,3 +132,8 @@ dmypy.json
 
 # CSV data files in examples
 examples/*.csv
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride

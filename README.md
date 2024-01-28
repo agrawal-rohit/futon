@@ -1,29 +1,31 @@
+<div align="center">
+
 <p align="center">
 <img width="341" alt="Logo" src="https://user-images.githubusercontent.com/29514438/122650855-bd657b00-d152-11eb-8296-1407f832bd91.png">
 </p>
 
 <p align="center">
-<img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/agrawal-rohit/futon/Build">
-<!-- <img alt="PyPI - Status" src="https://img.shields.io/pypi/status/futon"> -->
-<!-- <img alt="Codecov" src="https://img.shields.io/codecov/c/github/agrawal-rohit/futon"> -->
+<img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/agrawal-rohit/futon/Publish"> 
 <img alt="Codacy coverage" src="https://img.shields.io/codacy/coverage/9102daf9ad9546dbbec1cb26a339e0e5">
 <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/futon">
 <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/futon">
 <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/futon">
-<img alt="Codacy grade" src="https://img.shields.io/codacy/grade/9102daf9ad9546dbbec1cb26a339e0e5">
-<img alt="Licence" src="https://img.shields.io/github/license/agrawal-rohit/futon">
-<img alt="Contributions" src="https://img.shields.io/badge/contributions-welcome-orange">
+<img alt="Licence" src="https://img.shields.io/github/license/agrawal-rohit/futon"> 
 </p>
 
-# Installation
+<h4>Create automated bots that trade for you <span style="color: #59d49f">while you sleep</span></h4>
 
-```shell
+</div>
+
+## Installation
+
+```bash
 $ pip install futon
 ```
 
-# Usage
+## Usage
 
-## Step 1: Initialize a data provider
+### Step 1: Initialize a data provider
 
 A data provider refers to a source from where an instruments historical data can be fetched. Currently, **Binance** is the only supported provider (more are being added actively)
 
@@ -37,7 +39,7 @@ secret_key = '<API SECRET>'
 binance = Binance(api_key, secret_key)
 ```
 
-## Step 2: Choose an instrument
+### Step 2: Choose an instrument
 
 ```python
 coin = futon.instruments.Crypto(base_asset = 'DOGE',
@@ -60,7 +62,7 @@ coin.plot_candles()
 
 ![Candlestick Plot](imgs/candlestick_plot.png)
 
-## Step 3: Create a trading strategy
+### Step 3: Create a trading strategy
 
 ```python
 from futon.strategy import TradingStrategy
@@ -75,7 +77,7 @@ class MACDCrossover(TradingStrategy):
                                             signalperiod = 5,
                                             plot_separately = True)
 
-        # 
+        #
         self.indicators = [self.macd]
 
     # Live trading logic
@@ -103,7 +105,7 @@ class MACDCrossover(TradingStrategy):
 strat = MACDCrossover(coin)
 ```
 
-## Step 4: Run a backtest on historical data
+### Step 4: Run a backtest on historical data
 
 ```python
 strat.backtest(start_date = '2021-06-1 00:00:00', commision = 0.001, show_trades = True)
