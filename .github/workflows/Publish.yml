@@ -2,7 +2,7 @@ name: Publish
 
 on:
   push:
-    branches: [main, beta]
+    branches: [main, beta, next]
   pull_request:
     branches: [main, beta, next]
 
