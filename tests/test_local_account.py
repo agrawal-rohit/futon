@@ -1,4 +1,4 @@
-from futon.brokers import Local
+from futon.brokers.local import Local
 import unittest
 
 

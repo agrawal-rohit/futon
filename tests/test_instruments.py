@@ -1,5 +1,5 @@
-from futon.instruments import Crypto
-from futon.data.providers import Binance
+from futon.instruments.crypto import Crypto
+from futon.data.providers.binance import Binance
 import datetime as dt
 import pandas as pd
 import unittest
